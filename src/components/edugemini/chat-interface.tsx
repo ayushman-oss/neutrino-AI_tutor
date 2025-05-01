@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Info } from 'lucide-react'; // Added Info icon
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { FormattedText as FormattedChatMessage } from '@/components/edugemini/formatted-text'; // Import shared component
@@ -21,15 +21,16 @@ interface ChatInterfaceProps {
   messages: Message[];
   onSendMessage: (message: string) => void;
   isLoading?: boolean; // To show loading indicator for AI response
+  disabled?: boolean; // To disable input/sending
 }
 
-export function ChatInterface({ messages, onSendMessage, isLoading = false }: ChatInterfaceProps) {
+export function ChatInterface({ messages, onSendMessage, isLoading = false, disabled = false }: ChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const handleSend = () => {
-    if (inputMessage.trim() && !isLoading) {
+    if (inputMessage.trim() && !isLoading && !disabled) {
       onSendMessage(inputMessage);
       setInputMessage('');
     }
@@ -60,19 +61,17 @@ export function ChatInterface({ messages, onSendMessage, isLoading = false }: Ch
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef} viewportRef={viewportRef}>
         <div className="space-y-4">
           {messages.map((message) => (
-            // Added check for system messages - rendering differently or not at all
-            message.sender !== 'system' && (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex items-start gap-3",
-                  message.sender === 'user' ? 'justify-end' : 'justify-start'
-                )}
-              >
-                {message.sender === 'ai' && (
-                  <Avatar className="h-8 w-8 border border-accent flex-shrink-0">
-                    {/* Placeholder using picsum - replace with actual AI avatar if available */}
-                    <Image
+            <div
+              key={message.id}
+              className={cn(
+                "flex items-start gap-3",
+                message.sender === 'user' ? 'justify-end' : 'justify-start',
+                 message.sender === 'system' ? 'text-muted-foreground text-xs italic justify-center' : '' // Style system messages
+              )}
+            >
+              {message.sender === 'ai' && (
+                <Avatar className="h-8 w-8 border border-accent flex-shrink-0">
+                   <Image
                         src={`https://picsum.photos/seed/${message.id}/40/40`}
                         alt="AI Avatar"
                         width={40}
@@ -81,24 +80,34 @@ export function ChatInterface({ messages, onSendMessage, isLoading = false }: Ch
                         className="rounded-full"
                     />
                     <AvatarFallback>
-                      <Bot className="h-5 w-5" />
+                        <Bot className="h-5 w-5" />
                     </AvatarFallback>
-                  </Avatar>
+                </Avatar>
+              )}
+              {message.sender === 'system' && (
+                  <Info className="h-4 w-4 mr-2 flex-shrink-0" /> // Icon for system messages
+              )}
+              <div
+                className={cn(
+                  "max-w-[85%] rounded-lg p-3 text-sm break-words",
+                  message.sender === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : message.sender === 'ai'
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'bg-transparent p-0', // No background for system messages
+                  message.sender !== 'system' ? 'shadow-sm' : '' // Add slight shadow to user/ai messages
                 )}
-                <div
-                  className={cn(
-                    "max-w-[85%] rounded-lg p-3 text-sm break-words", // Added break-words
-                    message.sender === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground'
-                  )}
-                >
-                  <FormattedChatMessage text={message.text} />
-                </div>
-                {message.sender === 'user' && (
-                  <Avatar className="h-8 w-8 border flex-shrink-0">
-                     {/* Placeholder using picsum - replace with actual User avatar if available */}
-                    <Image
+              >
+                 {/* System messages are plain text, others use formatting */}
+                {message.sender === 'system' ? (
+                    <span>{message.text}</span>
+                ) : (
+                    <FormattedChatMessage text={message.text} />
+                )}
+              </div>
+              {message.sender === 'user' && (
+                <Avatar className="h-8 w-8 border flex-shrink-0">
+                   <Image
                         src={`https://picsum.photos/seed/${message.id}user/40/40`}
                         alt="User Avatar"
                         width={40}
@@ -107,21 +116,28 @@ export function ChatInterface({ messages, onSendMessage, isLoading = false }: Ch
                         className="rounded-full"
                      />
                     <AvatarFallback>
-                      <User className="h-5 w-5" />
+                        <User className="h-5 w-5" />
                     </AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            )
+                </Avatar>
+              )}
+            </div>
           ))}
           {isLoading && (
             <div className="flex items-start gap-3 justify-start">
               <Avatar className="h-8 w-8 border border-accent flex-shrink-0">
+                 <Image
+                      src={`https://picsum.photos/seed/ai_loading/40/40`}
+                      alt="AI Avatar"
+                      width={40}
+                      height={40}
+                      data-ai-hint="robot bot loading"
+                      className="rounded-full"
+                  />
                 <AvatarFallback>
                   <Bot className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
-              <div className="bg-secondary text-secondary-foreground rounded-lg p-3 text-sm">
+              <div className="bg-secondary text-secondary-foreground rounded-lg p-3 text-sm shadow-sm">
                 <Loader2 className="h-5 w-5 animate-spin" />
               </div>
             </div>
@@ -133,19 +149,21 @@ export function ChatInterface({ messages, onSendMessage, isLoading = false }: Ch
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Ask a question..."
+          placeholder={disabled ? "Generate content first..." : "Ask a follow-up question..."}
           className="flex-1 resize-none min-h-[40px]"
           rows={1}
-          disabled={isLoading}
+          disabled={isLoading || disabled} // Disable if AI is thinking OR if main content failed
+          aria-label="Chat input"
         />
         <Button
           type="button"
           size="icon"
           onClick={handleSend}
-          disabled={isLoading || !inputMessage.trim()}
-          className="bg-accent hover:bg-accent/90 text-accent-foreground"
+          disabled={isLoading || disabled || !inputMessage.trim()} // Also disable if input is empty
+          className="bg-accent hover:bg-accent/90 text-accent-foreground disabled:bg-muted disabled:text-muted-foreground"
+          aria-label="Send message"
         >
-          <Send className="h-5 w-5" />
+          {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
           <span className="sr-only">Send message</span>
         </Button>
       </div>

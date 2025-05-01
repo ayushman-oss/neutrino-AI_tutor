@@ -36,30 +36,46 @@ export default function Home() {
     setChatMessages([]); // Clear chat history
     setUrgency(data.urgency);
     setTopic(data.topic);
+    // Clear previous learning progress on new topic generation
+    setLearningProgress('');
 
     try {
       const content = await generateTutoringContent({ topic: data.topic, urgency: data.urgency });
       setTutoringContent(content);
+      // Initial learning progress message
       setLearningProgress(`Started learning about ${data.topic}. Received outline and subtopics.`);
-      // Simpler initial chat messages
+      // Initial chat messages guiding the user
       setChatMessages([
-        { id: Date.now().toString(), sender: 'ai', text: `Great! Let's start learning about **${data.topic}**. I've generated an outline and key subtopics for you.` },
-        { id: (Date.now() + 1).toString(), sender: 'ai', text: `Click on a subtopic to dive deeper, or ask me any questions you have!` },
+        { id: Date.now().toString(), sender: 'ai', text: `Great! Let's start learning about **${data.topic}**. I've generated an outline and key subtopics for you based on your **${data.urgency}** urgency level.` },
+        { id: (Date.now() + 1).toString(), sender: 'ai', text: `You can review the outline below. Click on a subtopic to see more details, or ask me any questions you have!` },
       ]);
     } catch (error: any) {
-      console.error("Error generating tutoring content:", error);
-       let description = "Failed to generate tutoring content. Please try again.";
-      if (error.message?.includes('503') || error.message?.includes('Service Unavailable') || error.message?.includes('overloaded')) {
-          description = "The AI service is currently experiencing high load. Please try again in a few moments.";
-      }
-      toast({
-        title: "Error",
-        description: description,
-        variant: "destructive",
-      });
-       // Add error message to chat if needed
-       const errorAiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: `Sorry, I encountered an error trying to generate content (${description}). Please try again later.` };
-      setChatMessages(prev => [...prev, errorAiMessage]);
+        console.error("Error generating tutoring content:", error);
+        let description = "Failed to generate tutoring content. Please try again.";
+        let chatErrorMessage = "Sorry, I encountered an error trying to generate content. Please try selecting the topic and urgency again.";
+
+        // Check for specific service unavailable/overloaded errors
+        if (error.message?.includes('503') || error.message?.includes('Service Unavailable') || error.message?.includes('overloaded')) {
+            description = "The AI service is currently experiencing high load. Please try again in a few moments.";
+            chatErrorMessage = "Sorry, the AI service is currently overloaded. Please try again in a few moments.";
+        } else if (error.message?.includes('Invalid output format')) {
+            // Handle potential format errors from the flow
+            description = "There was an issue formatting the content from the AI. Please try again.";
+             chatErrorMessage = "Sorry, I had trouble formatting the content correctly. Please try generating it again.";
+        }
+
+        toast({
+            title: "Error Generating Content",
+            description: description,
+            variant: "destructive",
+        });
+
+        // Add a more informative error message to the chat
+        const errorAiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: chatErrorMessage };
+        setChatMessages(prev => [...prev, errorAiMessage]);
+        // Reset topic/urgency state so user *must* use the form again
+        setTopic('');
+        setUrgency('');
     } finally {
       setIsGeneratingContent(false);
     }
@@ -68,13 +84,29 @@ export default function Home() {
   const handleSubtopicSelect = (subtopic: string) => {
     setSelectedSubtopic(subtopic);
     setLearningProgress(prev => `${prev}\nSelected subtopic: "${subtopic}".`);
-    // Optionally add a chat message indicating selection
-    // setChatMessages(prev => [...prev, { id: Date.now().toString(), sender: 'system', text: `Viewing details for ${subtopic}` }]);
+    // Add a chat message indicating selection for clarity
+    setChatMessages(prev => [
+        ...prev,
+        {
+            id: Date.now().toString(),
+            sender: 'system', // Use 'system' for non-chat info, or 'ai' if preferred
+            text: `Now viewing details for subtopic: **${subtopic}**`
+        }
+    ]);
   };
 
   const handleBackToOutline = () => {
     setSelectedSubtopic(null);
     setLearningProgress(prev => `${prev}\nReturned to outline view.`);
+     // Add a chat message indicating return to outline
+     setChatMessages(prev => [
+        ...prev,
+        {
+            id: Date.now().toString(),
+            sender: 'system',
+            text: `Returned to the main outline for **${topic}**.`
+        }
+    ]);
   };
 
   const handleSendMessage = async (message: string) => {
@@ -103,14 +135,14 @@ export default function Home() {
 
       // Check for specific service unavailable errors
       if (error.message?.includes('503') || error.message?.includes('Service Unavailable') || error.message?.includes('overloaded')) {
-          description = "The AI service is currently experiencing high load. Please try again in a few moments.";
+          description = "The AI service is currently experiencing high load. Please try asking again in a few moments.";
           chatErrorMessage = "Sorry, the AI service is currently overloaded. Please try asking again in a few moments.";
       }
 
       const errorAiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: chatErrorMessage };
       setChatMessages(prev => [...prev, errorAiMessage]);
       toast({
-        title: "Error",
+        title: "Error Answering Question",
         description: description,
         variant: "destructive",
       });
@@ -128,23 +160,24 @@ export default function Home() {
     let contentString = `Topic: ${topic}\nUrgency: ${urgency || 'N/A'}\n\n`;
     contentString += `== Outline ==\n${outline}\n\n`;
     contentString += `== Subtopics ==\n${subtopics.map(s => `- ${s}`).join('\n')}\n\n`;
-    contentString += `== Explanation (Overall) ==\n${explanation}\n\n`;
-    contentString += `== Example (Overall) ==\n${example}\n\n`;
-    contentString += `== Practice Problem (Overall) ==\n${problem}\n\n`;
+    contentString += `== Explanation (Urgency: ${urgency}) ==\n${explanation}\n\n`;
+    contentString += `== Example (Urgency: ${urgency}) ==\n${example}\n\n`;
+    contentString += `== Practice Problem (Urgency: ${urgency}) ==\n${problem}\n\n`;
     // Note: The explanation, example, and problem are currently for the main topic, not per subtopic.
     // Append chat history
     contentString += `== Chat History ==\n`;
     chatMessages.forEach(msg => {
-        if (msg.sender !== 'system') { // Exclude system messages if any
-            contentString += `${msg.sender.toUpperCase()}: ${msg.text}\n`;
-        }
+        // Include system messages for context during export
+        const prefix = msg.sender === 'user' ? 'USER' : (msg.sender === 'ai' ? 'AI' : 'SYSTEM');
+        contentString += `${prefix}: ${msg.text}\n`;
+
     });
 
 
     const blob = new Blob([contentString], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${topic.replace(/ /g, '_')}_tutoring_session.txt`;
+    link.download = `${topic.replace(/ /g, '_')}_tutoring_session_${urgency}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -193,6 +226,7 @@ export default function Home() {
 
             {isGeneratingContent && (
                <div className="space-y-4">
+                 <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}" ({urgency} urgency)...</p>
                  <Skeleton className="h-8 w-1/2" />
                  <Skeleton className="h-4 w-3/4" />
                  <Skeleton className="h-4 w-1/2" />
@@ -207,11 +241,12 @@ export default function Home() {
                 {selectedSubtopic ? (
                   <>
                     <Button variant="outline" size="sm" onClick={handleBackToOutline}>
-                      <ArrowLeft className="mr-2 h-4 w-4" /> Back to Outline
+                      <ArrowLeft className="mr-2 h-4 w-4" /> Back to Outline & Subtopics
                     </Button>
                     <TutoringContentDisplay
                         content={tutoringContent}
                         selectedSubtopic={selectedSubtopic} // Pass selected subtopic
+                        urgency={urgency as 'high' | 'medium' | 'low'} // Pass urgency
                     />
                   </>
                 ) : (
@@ -227,17 +262,21 @@ export default function Home() {
           </div>
 
           {/* Chat Interface Area (Right/Bottom) */}
-          {tutoringContent && (
+          {/* Show chat only when content generation is complete OR if there was an error after trying */}
+          {(tutoringContent || (!isGeneratingContent && topic)) && (
             <div className="lg:col-span-1">
               <ChatInterface
                 messages={chatMessages}
                 onSendMessage={handleSendMessage}
                 isLoading={isAnsweringQuestion}
+                // Disable input if initial content generation failed
+                disabled={!tutoringContent}
               />
             </div>
           )}
-           {/* Show form again if generation failed and no content exists */}
-           {!tutoringContent && !isGeneratingContent && topic && (
+
+           {/* Show form again if generation failed and no content exists and not currently generating */}
+           {!tutoringContent && !isGeneratingContent && !topic && (
              <div className="lg:col-span-3"> {/* Span full width if form reappears */}
                 <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
              </div>

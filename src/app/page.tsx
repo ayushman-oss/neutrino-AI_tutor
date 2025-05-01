@@ -46,13 +46,20 @@ export default function Home() {
         { id: Date.now().toString(), sender: 'ai', text: `Great! Let's start learning about **${data.topic}**. I've generated an outline and key subtopics for you.` },
         { id: (Date.now() + 1).toString(), sender: 'ai', text: `Click on a subtopic to dive deeper, or ask me any questions you have!` },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating tutoring content:", error);
+       let description = "Failed to generate tutoring content. Please try again.";
+      if (error.message?.includes('503') || error.message?.includes('Service Unavailable') || error.message?.includes('overloaded')) {
+          description = "The AI service is currently experiencing high load. Please try again in a few moments.";
+      }
       toast({
         title: "Error",
-        description: "Failed to generate tutoring content. Please try again.",
+        description: description,
         variant: "destructive",
       });
+       // Add error message to chat if needed
+       const errorAiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: `Sorry, I encountered an error trying to generate content (${description}). Please try again later.` };
+      setChatMessages(prev => [...prev, errorAiMessage]);
     } finally {
       setIsGeneratingContent(false);
     }
@@ -89,13 +96,22 @@ export default function Home() {
       setChatMessages(prev => [...prev, newAiMessage]);
       // Update learning progress based on the question and answer (simplified)
       setLearningProgress(prev => `${prev}\nAsked: "${message}". Received answer.`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error answering question:", error);
-      const errorAiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: "Sorry, I encountered an error trying to answer your question. Please try asking again." };
+      let description = "Failed to get an answer from the AI. Please try again.";
+      let chatErrorMessage = "Sorry, I encountered an error trying to answer your question. Please try asking again.";
+
+      // Check for specific service unavailable errors
+      if (error.message?.includes('503') || error.message?.includes('Service Unavailable') || error.message?.includes('overloaded')) {
+          description = "The AI service is currently experiencing high load. Please try again in a few moments.";
+          chatErrorMessage = "Sorry, the AI service is currently overloaded. Please try asking again in a few moments.";
+      }
+
+      const errorAiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: chatErrorMessage };
       setChatMessages(prev => [...prev, errorAiMessage]);
       toast({
         title: "Error",
-        description: "Failed to get an answer from the AI. Please try again.",
+        description: description,
         variant: "destructive",
       });
     } finally {
@@ -116,18 +132,26 @@ export default function Home() {
     contentString += `== Example (Overall) ==\n${example}\n\n`;
     contentString += `== Practice Problem (Overall) ==\n${problem}\n\n`;
     // Note: The explanation, example, and problem are currently for the main topic, not per subtopic.
+    // Append chat history
+    contentString += `== Chat History ==\n`;
+    chatMessages.forEach(msg => {
+        if (msg.sender !== 'system') { // Exclude system messages if any
+            contentString += `${msg.sender.toUpperCase()}: ${msg.text}\n`;
+        }
+    });
+
 
     const blob = new Blob([contentString], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${topic.replace(/ /g, '_')}_tutoring_content.txt`;
+    link.download = `${topic.replace(/ /g, '_')}_tutoring_session.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
     toast({
-      title: "Content Exported",
-      description: "The tutoring content has been downloaded as a text file.",
+      title: "Session Exported",
+      description: "The tutoring content and chat history have been downloaded.",
     });
   };
 
@@ -155,7 +179,7 @@ export default function Home() {
            </div>
            {tutoringContent && (
             <Button variant="secondary" size="sm" onClick={handleExportContent}>
-              <Download className="mr-2 h-4 w-4" /> Export Content
+              <Download className="mr-2 h-4 w-4" /> Export Session
             </Button>
           )}
         </header>
@@ -164,7 +188,7 @@ export default function Home() {
           {/* Main Content Area (Left/Top) */}
           <div className="lg:col-span-2 space-y-6">
             {!tutoringContent && !isGeneratingContent && (
-              <UrgencyTopicForm onSubmit={handleGenerateContent} />
+              <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
             )}
 
             {isGeneratingContent && (
@@ -195,6 +219,7 @@ export default function Home() {
                     outline={tutoringContent.outline}
                     subtopics={tutoringContent.subtopics}
                     onSubtopicSelect={handleSubtopicSelect}
+                    topic={topic} // Pass topic for title
                   />
                 )}
               </>
@@ -211,6 +236,12 @@ export default function Home() {
               />
             </div>
           )}
+           {/* Show form again if generation failed and no content exists */}
+           {!tutoringContent && !isGeneratingContent && topic && (
+             <div className="lg:col-span-3"> {/* Span full width if form reappears */}
+                <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
+             </div>
+            )}
         </div>
       </div>
     </div>

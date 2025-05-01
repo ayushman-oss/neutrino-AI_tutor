@@ -52,7 +52,7 @@ const generateTutoringContentPrompt = ai.definePrompt({
       problem: z.string().describe('A practice problem related to the topic, adjusted for urgency.'),
     }),
   },
-  // Updated prompt with conditional instructions based on urgency
+  // Updated prompt to instruct the LLM based on the urgency variable, removing #eq helper
   prompt: `You are an expert engineering tutor. Your goal is to explain engineering topics clearly and effectively based on the user's needs.
 
 The user wants to learn about **{{topic}}** with **{{urgency}}** urgency.
@@ -67,23 +67,18 @@ Generate the following content, tailoring the detail level based on the urgency:
 
 **Urgency Guidelines:**
 
-{{#eq urgency "high"}}
-*   **Explanation:** Keep it very brief. Use one-sentence definitions for key terms. Focus on bullet points for core concepts. Use minimal wording.
-*   **Example:** Provide a very simple, direct example.
-*   **Problem:** A straightforward problem testing basic understanding.
-{{/eq}}
-
-{{#eq urgency "medium"}}
-*   **Explanation:** Provide a standard-level explanation. Cover the main points clearly. Use paragraphs and bullet points where appropriate.
-*   **Example:** A standard example illustrating the main concept.
-*   **Problem:** A problem requiring application of the core concepts.
-{{/eq}}
-
-{{#eq urgency "low"}}
-*   **Explanation:** Offer a detailed explanation. Dive deeper into nuances and related concepts. Use clear paragraphs, lists, and potentially mention key formulas or principles.
-*   **Example:** A more complex or detailed example, perhaps with variations.
-*   **Problem:** A challenging problem that may require combining multiple concepts or deeper analysis.
-{{/eq}}
+*   **If urgency is 'high':**
+    *   Explanation: Keep it very brief. Use one-sentence definitions for key terms. Focus on bullet points for core concepts. Use minimal wording.
+    *   Example: Provide a very simple, direct example.
+    *   Problem: A straightforward problem testing basic understanding.
+*   **If urgency is 'medium':**
+    *   Explanation: Provide a standard-level explanation. Cover the main points clearly. Use paragraphs and bullet points where appropriate.
+    *   Example: A standard example illustrating the main concept.
+    *   Problem: A problem requiring application of the core concepts.
+*   **If urgency is 'low':**
+    *   Explanation: Offer a detailed explanation. Dive deeper into nuances and related concepts. Use clear paragraphs, lists, and potentially mention key formulas or principles.
+    *   Example: A more complex or detailed example, perhaps with variations.
+    *   Problem: A challenging problem that may require combining multiple concepts or deeper analysis.
 
 **Output Format:**
 
@@ -131,7 +126,12 @@ const generateTutoringContentFlow = ai.defineFlow<
         return output!;
       } catch (error: any) {
           console.error(`Error in generateTutoringContentFlow for topic "${input.topic}" (Urgency: ${input.urgency}):`, error);
-          // Re-throw the error to be caught by the calling function in page.tsx
+          // Check if it's a Handlebars compilation error
+          if (error.message?.includes('Handlebars') || error.message?.includes('unknown helper')) {
+             console.error("Handlebars template error detected. Prompt might be malformed.");
+             throw new Error(`Internal template error: ${error.message}`); // Throw a more specific error for UI handling
+          }
+          // Re-throw other errors to be caught by the calling function in page.tsx
           throw error;
       }
   }

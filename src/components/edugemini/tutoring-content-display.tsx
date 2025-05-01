@@ -1,89 +1,71 @@
 "use client";
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { BookOpen, ListTree, TestTubeDiagonal, HelpCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BookOpen, TestTubeDiagonal, HelpCircle } from 'lucide-react';
 import type { GenerateTutoringContentOutput } from '@/ai/flows/generate-tutoring-content';
+import { FormattedText } from '@/components/edugemini/formatted-text'; // Import shared component
 
 interface TutoringContentDisplayProps {
   content: GenerateTutoringContentOutput;
+  selectedSubtopic: string | null; // Receive the selected subtopic
 }
 
-// Helper to format text with potential markdown (simple version)
-const FormattedText: React.FC<{ text: string }> = ({ text }) => {
-  // Basic markdown-like formatting for bold and lists
-  const formatted = text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-    .replace(/^- (.*)/gm, '<li style="margin-left: 1.5rem; list-style: disc;">$1</li>'); // List items
 
-  // Split by newlines and wrap paragraphs
-  const paragraphs = formatted.split('\n\n').map((para, index) => `<p key=${index}>${para.replace(/\n/g, '<br />')}</p>`).join('');
+export function TutoringContentDisplay({ content, selectedSubtopic }: TutoringContentDisplayProps) {
+    // In a future enhancement, the AI response would ideally provide content *per subtopic*.
+    // For now, we'll display the general explanation, example, and problem,
+    // clearly indicating they relate to the selected subtopic context.
 
+    if (!selectedSubtopic) {
+        // This case should ideally not happen if the parent component manages state correctly,
+        // but we handle it defensively.
+        return <p>Please select a subtopic to view details.</p>;
+    }
 
-  // Replace list markers within paragraphs back to list elements
-  const finalHtml = paragraphs.replace(/<p key=\d+><li/g, '<li').replace(/<\/li><\/p>/g, '</li>');
+    // Future: If content object had subtopic-specific details like content.subtopicDetails[selectedSubtopic].explanation
+    const explanation = content.explanation; // Use general explanation for now
+    const example = content.example;         // Use general example for now
+    const problem = content.problem;         // Use general problem for now
 
-  return <div dangerouslySetInnerHTML={{ __html: finalHtml }} className="space-y-2" />;
-};
-
-export function TutoringContentDisplay({ content }: TutoringContentDisplayProps) {
-  return (
+    return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-            <ListTree /> Topic Outline & Subtopics
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-           <p className="font-semibold">Outline:</p>
-           <FormattedText text={content.outline} />
-           <Separator className="my-4" />
-           <p className="font-semibold">Subtopics:</p>
-           <ul className="list-none space-y-1">
-             {content.subtopics.map((subtopic, index) => (
-               <li key={index} className="flex items-start">
-                 <span className="text-accent mr-2 mt-1">•</span>
-                 <FormattedText text={subtopic} />
-               </li>
-             ))}
-           </ul>
-        </CardContent>
-      </Card>
+        <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4">
+            Details for: {selectedSubtopic}
+        </h2>
 
-      <Card>
+        <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-             <BookOpen /> Explanation
-          </CardTitle>
+            <CardTitle className="flex items-center gap-2 text-primary">
+                <BookOpen /> Explanation
+            </CardTitle>
         </CardHeader>
         <CardContent>
-          <FormattedText text={content.explanation} />
+            <FormattedText text={explanation} />
         </CardContent>
-      </Card>
+        </Card>
 
-      <Card>
+        <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-             <TestTubeDiagonal /> Example
-          </CardTitle>
+            <CardTitle className="flex items-center gap-2 text-primary">
+                <TestTubeDiagonal /> Example
+            </CardTitle>
         </CardHeader>
         <CardContent>
-          <FormattedText text={content.example} />
+            <FormattedText text={example} />
         </CardContent>
-      </Card>
+        </Card>
 
-      <Card>
+        <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-             <HelpCircle /> Practice Problem
-          </CardTitle>
+            <CardTitle className="flex items-center gap-2 text-primary">
+                <HelpCircle /> Practice Problem
+            </CardTitle>
         </CardHeader>
         <CardContent>
-          <FormattedText text={content.problem} />
+            <FormattedText text={problem} />
         </CardContent>
-      </Card>
+        </Card>
     </div>
-  );
+    );
 }

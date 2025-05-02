@@ -84,10 +84,12 @@ export default function Home() {
     try {
       const content = await generateTutoringContent({ topic: data.topic, urgency: data.urgency });
       setTutoringContent(content);
-      setChatMessages([
-        { id: Date.now().toString(), sender: 'system', text: `Great! Let's start learning about **${data.topic}**. I've generated an outline and key subtopics for you based on your **${data.urgency}** urgency level.` },
-        { id: (Date.now() + 1).toString(), sender: 'system', text: `Use the sidebar to navigate through the subtopics or ask me any questions you have!` },
-      ]);
+      // Clear chat messages instead of adding initial ones
+      setChatMessages([]);
+      // Example of adding a single, concise message if desired:
+      // setChatMessages([
+      //   { id: Date.now().toString(), sender: 'system', text: `Content for **${data.topic}** generated. Use the sidebar or ask questions.` },
+      // ]);
     } catch (error: any) {
         console.error("Error generating tutoring content:", error);
         let description = "Failed to generate tutoring content. Please try again.";
@@ -210,9 +212,9 @@ export default function Home() {
       setSelectedSubtopic(null); // Clear subtopic selection
       setViewMode('qna'); // Switch view to show Q&A
 
-      // Add a system message to chat indicating where the answer is
-      const systemMessage: Message = { id: (Date.now() + 1).toString(), sender: 'system', text: `Answer added to the 'Q&A #${newIndex + 1}' section in the sidebar and displayed in the main content area.`, timestamp: new Date() };
-      setChatMessages(prev => [...prev, systemMessage]);
+      // Add a system message to chat indicating where the answer is - REMOVED
+      // const systemMessage: Message = { id: (Date.now() + 1).toString(), sender: 'system', text: `Answer added to the 'Q&A #${newIndex + 1}' section in the sidebar and displayed in the main content area.`, timestamp: new Date() };
+      // setChatMessages(prev => [...prev, systemMessage]);
 
     } catch (error: any) {
       console.error("Error answering question:", error);

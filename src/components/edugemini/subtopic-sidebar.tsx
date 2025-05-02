@@ -12,6 +12,7 @@ interface SubtopicSidebarProps {
   subtopics: string[];
   selectedSubtopic: string | null;
   onSubtopicSelect: (subtopic: string | null) => void;
+  currentView: 'outline' | 'subtopic' | 'qna'; // Added to know which view is active
 }
 
 export function SubtopicSidebar({
@@ -19,6 +20,7 @@ export function SubtopicSidebar({
   subtopics,
   selectedSubtopic,
   onSubtopicSelect,
+  currentView, // Receive currentView
 }: SubtopicSidebarProps) {
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
@@ -35,12 +37,15 @@ export function SubtopicSidebar({
                 variant="ghost"
                 className={cn(
                   "w-full justify-start text-sm",
-                  selectedSubtopic === null ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-sidebar-accent/80'
+                  // Highlight if selectedSubtopic is null OR if view is qna (implies outline context)
+                  (currentView === 'outline' || currentView === 'qna') && selectedSubtopic === null
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'hover:bg-sidebar-accent/80'
                 )}
                 onClick={() => onSubtopicSelect(null)}
             >
                 <List className="mr-2 h-4 w-4" />
-                Outline
+                Outline / Overview
             </Button>
 
           {subtopics.map((subtopic) => (
@@ -49,24 +54,19 @@ export function SubtopicSidebar({
               variant="ghost"
               className={cn(
                 "w-full justify-start text-sm truncate", // Added truncate for long subtopic names
-                selectedSubtopic === subtopic
+                // Highlight only if currentView is 'subtopic' and this subtopic is selected
+                currentView === 'subtopic' && selectedSubtopic === subtopic
                   ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'hover:bg-sidebar-accent/80'
               )}
               onClick={() => onSubtopicSelect(subtopic)}
               title={subtopic} // Add title for tooltip on hover for truncated text
             >
-               {/* You might want a specific icon per subtopic later, or a default one */}
-               {/* <FileText className="mr-2 h-4 w-4 flex-shrink-0" /> */}
               <span className="flex-grow text-left">{subtopic}</span>
             </Button>
           ))}
         </nav>
       </ScrollArea>
-      {/* Optional Footer */}
-      {/* <div className="p-4 border-t border-sidebar-border mt-auto">
-        <p className="text-xs text-muted-foreground">EduGemini Sidebar</p>
-      </div> */}
     </div>
   );
 }

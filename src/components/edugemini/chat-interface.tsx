@@ -152,7 +152,7 @@ export function ChatInterface({ messages, onSendMessage, isLoading = false, disa
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder={disabled ? "Generate content first..." : "Ask a follow-up question..."}
+          placeholder={disabled ? "Generate content first..." : "Ask a question..."} // Updated placeholder
           className="flex-1 resize-none min-h-[40px]"
           rows={1}
           disabled={isLoading || disabled} // Disable if AI is thinking OR if main content failed

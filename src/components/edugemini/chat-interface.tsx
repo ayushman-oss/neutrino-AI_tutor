@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -22,9 +23,10 @@ interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean; // To show loading indicator for AI response
   disabled?: boolean; // To disable input/sending
+  className?: string; // Allow passing custom classes
 }
 
-export function ChatInterface({ messages, onSendMessage, isLoading = false, disabled = false }: ChatInterfaceProps) {
+export function ChatInterface({ messages, onSendMessage, isLoading = false, disabled = false, className }: ChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -51,13 +53,14 @@ export function ChatInterface({ messages, onSendMessage, isLoading = false, disa
           if (viewportRef.current) {
             viewportRef.current.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
           }
-      }, 0);
+      }, 100); // Increased delay slightly
     }
   }, [messages, isLoading]);
 
 
   return (
-    <div className="flex flex-col h-[70vh] lg:h-auto lg:min-h-[500px] border rounded-lg overflow-hidden">
+    // Use flex-1 to take available space, min-h-0 to allow shrinking, and overflow-hidden
+    <div className={cn("flex flex-col border rounded-lg overflow-hidden bg-card shadow-sm", className)}>
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef} viewportRef={viewportRef}>
         <div className="space-y-4">
           {messages.map((message) => (
@@ -144,7 +147,7 @@ export function ChatInterface({ messages, onSendMessage, isLoading = false, disa
           )}
         </div>
       </ScrollArea>
-      <div className="border-t p-4 bg-background flex items-center gap-2">
+      <div className="border-t p-4 bg-background flex items-center gap-2 flex-shrink-0"> {/* Prevent input area from shrinking */}
         <Textarea
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}

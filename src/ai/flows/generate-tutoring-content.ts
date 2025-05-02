@@ -13,12 +13,14 @@ import {z} from 'genkit';
 
 const UrgencyLevel = z.enum(['high', 'medium', 'low']);
 
+// Removed export
 const GenerateTutoringContentInputSchema = z.object({
   urgency: UrgencyLevel.describe('The urgency level of learning the topic (high, medium, low).'),
   topic: z.string().describe('The specific engineering topic to learn about.'),
 });
 export type GenerateTutoringContentInput = z.infer<typeof GenerateTutoringContentInputSchema>;
 
+// Removed export
 const GenerateTutoringContentOutputSchema = z.object({
   outline: z.string().describe('The outline of the topic, formatted as a list.'),
   subtopics: z.array(z.string()).describe('The key subtopics of the main topic.'),
@@ -37,20 +39,12 @@ export async function generateTutoringContent(
 const generateTutoringContentPrompt = ai.definePrompt({
   name: 'generateTutoringContentPrompt',
   input: {
-    schema: z.object({
-      urgency: UrgencyLevel.describe('The urgency level of learning the topic (high, medium, low).'),
-      topic: z.string().describe('The specific engineering topic to learn about.'),
-    }),
+    // Use the internal schema directly
+    schema: GenerateTutoringContentInputSchema,
   },
   output: {
-    // Schema remains the same, but content detail varies
-    schema: z.object({
-      outline: z.string().describe('The outline of the topic, formatted as a list.'),
-      subtopics: z.array(z.string()).describe('The key subtopics of the main topic.'),
-      explanation: z.string().describe('Explanation of the topic, adjusted for urgency.'),
-      example: z.string().describe('An example to illustrate the topic, adjusted for urgency.'),
-      problem: z.string().describe('A practice problem related to the topic, adjusted for urgency.'),
-    }),
+    // Use the internal schema directly
+    schema: GenerateTutoringContentOutputSchema,
   },
   // Updated prompt to instruct the LLM based on the urgency variable, removing #eq helper
   prompt: `You are an expert engineering tutor. Your goal is to explain engineering topics clearly and effectively based on the user's needs.
@@ -104,24 +98,24 @@ const generateTutoringContentFlow = ai.defineFlow<
         if (!output || !Array.isArray(output.subtopics)) {
             console.error("Invalid output format received from LLM:", output);
             // Attempt to recover or throw a more specific error
+             const fallbackOutput: GenerateTutoringContentOutput = {
+                outline: output?.outline || "Error: Outline missing",
+                subtopics: ["Error: Subtopics missing or invalid"],
+                explanation: output?.explanation || "Error: Explanation missing",
+                example: output?.example || "Error: Example missing",
+                problem: output?.problem || "Error: Problem missing",
+             };
+
              if (output && typeof output.subtopics === 'string') {
                 // Attempt to parse if it looks like a stringified array
                  try {
-                    output.subtopics = JSON.parse(output.subtopics);
+                    fallbackOutput.subtopics = JSON.parse(output.subtopics);
                  } catch (parseError) {
                      console.error("Failed to parse subtopics string:", parseError);
-                     // Fallback or throw
-                     output.subtopics = ["Error: Could not parse subtopics"];
+                     fallbackOutput.subtopics = ["Error: Could not parse subtopics"];
                  }
-             } else {
-                // Fallback if subtopics are missing or wrong type
-                output.subtopics = output?.subtopics || ["Error: Subtopics missing"];
              }
-             // Ensure other fields are strings
-             output.outline = output.outline || "Error: Outline missing";
-             output.explanation = output.explanation || "Error: Explanation missing";
-             output.example = output.example || "Error: Example missing";
-             output.problem = output.problem || "Error: Problem missing";
+             return fallbackOutput; // Return the structured fallback
         }
         return output!;
       } catch (error: any) {
@@ -130,9 +124,11 @@ const generateTutoringContentFlow = ai.defineFlow<
           if (error.message?.includes('Handlebars') || error.message?.includes('unknown helper')) {
              console.error("Handlebars template error detected. Prompt might be malformed.");
              throw new Error(`Internal template error: ${error.message}`); // Throw a more specific error for UI handling
+          } else if (error.message?.includes('503') || error.message?.includes('overloaded')) {
+             throw new Error("AI service overloaded. Please try again soon.");
           }
           // Re-throw other errors to be caught by the calling function in page.tsx
-          throw error;
+          throw new Error(`Failed to generate content: ${error.message}`);
       }
   }
 );

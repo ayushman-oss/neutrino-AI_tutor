@@ -11,11 +11,13 @@
 import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
 
+// Removed export
 const SummarizeTopicOutlineInputSchema = z.object({
   topic: z.string().describe('The engineering topic to summarize.'),
 });
 export type SummarizeTopicOutlineInput = z.infer<typeof SummarizeTopicOutlineInputSchema>;
 
+// Removed export
 const SummarizeTopicOutlineOutputSchema = z.object({
   outline: z.string().describe('A concise outline of the engineering topic.'),
 });
@@ -28,16 +30,14 @@ export async function summarizeTopicOutline(input: SummarizeTopicOutlineInput): 
 const prompt = ai.definePrompt({
   name: 'summarizeTopicOutlinePrompt',
   input: {
-    schema: z.object({
-      topic: z.string().describe('The engineering topic to summarize.'),
-    }),
+    // Use the internal schema directly
+    schema: SummarizeTopicOutlineInputSchema,
   },
   output: {
-    schema: z.object({
-      outline: z.string().describe('A concise outline of the engineering topic, including key subtopics.'),
-    }),
+    // Use the internal schema directly
+    schema: SummarizeTopicOutlineOutputSchema,
   },
-  prompt: `You are an expert in engineering education. Your task is to generate a concise outline of the given engineering topic, including key subtopics, so students can quickly grasp the scope and structure of the subject matter.\n\nTopic: {{{topic}}}\n\nOutline:`, 
+  prompt: `You are an expert in engineering education. Your task is to generate a concise outline of the given engineering topic, including key subtopics, so students can quickly grasp the scope and structure of the subject matter.\n\nTopic: {{{topic}}}\n\nOutline:`,
 });
 
 const summarizeTopicOutlineFlow = ai.defineFlow<

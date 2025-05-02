@@ -10,6 +10,7 @@
 import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
 
+// Removed export
 const AnswerEngineeringQuestionInputSchema = z.object({
   topic: z.string().describe('The main engineering topic the question is about.'),
   question: z.string().describe('The question about the engineering topic.'),
@@ -19,6 +20,7 @@ const AnswerEngineeringQuestionInputSchema = z.object({
 });
 export type AnswerEngineeringQuestionInput = z.infer<typeof AnswerEngineeringQuestionInputSchema>;
 
+// Removed export
 const AnswerEngineeringQuestionOutputSchema = z.object({
   answer: z.string().describe('The answer to the engineering question.'),
 });
@@ -31,18 +33,12 @@ export async function answerEngineeringQuestion(input: AnswerEngineeringQuestion
 const prompt = ai.definePrompt({
   name: 'answerEngineeringQuestionPrompt',
   input: {
-    schema: z.object({
-      topic: z.string().describe('The main engineering topic the question is about.'),
-      question: z.string().describe('The question about the engineering topic.'),
-      urgency: z.string().describe('The urgency level of the user.'),
-      learningProgress: z.string().describe('The current learning progress of the user in the topic.'),
-      selectedSubtopic: z.string().optional().describe('The specific subtopic the user is currently focused on, if any.'), // Added optional subtopic
-    }),
+    // Use the internal schema directly
+    schema: AnswerEngineeringQuestionInputSchema,
   },
   output: {
-    schema: z.object({
-      answer: z.string().describe('The answer to the engineering question.'),
-    }),
+    // Use the internal schema directly
+    schema: AnswerEngineeringQuestionOutputSchema,
   },
   // Updated prompt to include subtopic context
   prompt: `You are an expert engineering tutor. A student is learning about the topic '{{topic}}'.
@@ -66,8 +62,20 @@ const answerEngineeringQuestionFlow = ai.defineFlow<
   inputSchema: AnswerEngineeringQuestionInputSchema,
   outputSchema: AnswerEngineeringQuestionOutputSchema,
 }, async input => {
-  const {output} = await prompt(input);
-  // Basic error handling or refinement could be added here if needed
-  return output!;
+    try {
+        const {output} = await prompt(input);
+        // Basic error handling or refinement could be added here if needed
+        return output!;
+    } catch (error: any) {
+        console.error(`Error in answerEngineeringQuestionFlow:`, error);
+        // Handle specific errors like overload
+        if (error.message?.includes('503') || error.message?.includes('Service Unavailable') || error.message?.includes('overloaded')) {
+           throw new Error("AI service overloaded. Please try again soon.");
+        } else if (error.message?.includes('Handlebars')) {
+           console.error("Handlebars template error detected in answerEngineeringQuestionFlow.");
+           throw new Error(`Internal template error: ${error.message}`);
+        }
+        // Re-throw other errors
+        throw new Error(`Failed to answer question: ${error.message}`);
+    }
 });
-

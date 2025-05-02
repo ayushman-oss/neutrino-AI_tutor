@@ -13,10 +13,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { Message } from '@/components/edugemini/chat-interface';
-import { BrainCircuit, Download, Menu, BookOpen, ListTree, HelpCircle } from 'lucide-react'; // Added HelpCircle icon
+import { BrainCircuit, Download, Menu, BookOpen, ListTree, HelpCircle } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
 import { FormattedText } from '@/components/edugemini/formatted-text';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Import Card components
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 
 interface SubtopicDetailCache {
@@ -46,8 +46,9 @@ export default function Home() {
 
   // State for Q&A handling
   const [viewMode, setViewMode] = useState<'outline' | 'subtopic' | 'qna'>('outline');
-  const [currentQnA, setCurrentQnA] = useState<QnARecord | null>(null);
+  // Removed currentQnA state, will derive from history and selected index
   const [qnaHistory, setQnaHistory] = useState<QnARecord[]>([]); // History of Q&A pairs
+  const [selectedQnAIndex, setSelectedQnAIndex] = useState<number | null>(null); // Index of the selected Q&A
 
 
   useEffect(() => {
@@ -60,7 +61,8 @@ export default function Home() {
       fetchSubtopicDetails(selectedSubtopic);
     } else if (viewMode === 'outline') {
         setSubtopicDetails(null); // Clear details when viewing outline
-        setCurrentQnA(null); // Clear QnA when viewing outline
+        // Don't clear QnA, just ensure nothing is selected
+        setSelectedQnAIndex(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, selectedSubtopic]); // Run when viewMode or selectedSubtopic changes
@@ -73,7 +75,7 @@ export default function Home() {
     setSubtopicDetailCache({});
     setChatMessages([]);
     setQnaHistory([]); // Clear Q&A history
-    setCurrentQnA(null); // Clear current Q&A display
+    setSelectedQnAIndex(null); // Clear selected Q&A
     setUrgency(data.urgency);
     setTopic(data.topic);
     setLearningProgress('');
@@ -158,7 +160,7 @@ export default function Home() {
 
   const handleSubtopicSelect = (subtopic: string | null) => {
     setSelectedSubtopic(subtopic);
-    setCurrentQnA(null); // Clear QnA display when navigating
+    setSelectedQnAIndex(null); // Clear QnA selection when navigating subtopics/outline
     if (subtopic) {
         setViewMode('subtopic');
         // Fetching details is handled by the useEffect
@@ -167,13 +169,25 @@ export default function Home() {
     }
   };
 
+   const handleQnASelect = (index: number | null) => {
+       setSelectedQnAIndex(index);
+       setSelectedSubtopic(null); // Clear subtopic selection
+       if (index !== null) {
+           setViewMode('qna');
+       } else {
+           // If index is null, decide whether to go to outline or last subtopic
+           // For simplicity, let's default to outline view if no Q&A is selected
+           setViewMode('outline');
+       }
+   };
+
   const handleSendMessage = async (message: string) => {
     if (!topic || !urgency || !tutoringContent) return;
 
     const newUserMessage: Message = { id: Date.now().toString(), sender: 'user', text: message, timestamp: new Date() };
     setChatMessages(prev => [...prev, newUserMessage]);
     setIsAnsweringQuestion(true);
-    setCurrentQnA(null); // Clear previous QnA while loading new one
+    // Don't clear view or selection while loading
 
     try {
       const input: AnswerEngineeringQuestionInput = {
@@ -181,17 +195,23 @@ export default function Home() {
           question: message,
           urgency: urgency,
           learningProgress: learningProgress,
-          selectedSubtopic: viewMode === 'subtopic' ? selectedSubtopic : undefined, // Send subtopic only if currently viewing one
+          // Q&A is general, don't tie to specific subtopic context unless needed
+          // selectedSubtopic: viewMode === 'subtopic' ? selectedSubtopic : undefined,
       };
       const response = await answerEngineeringQuestion(input);
       const newQnA = { question: message, answer: response.answer };
 
-      setCurrentQnA(newQnA); // Set the current Q&A to be displayed
-      setQnaHistory(prev => [...prev, newQnA]); // Add to history
+      // Add the new QnA to the history and get its index
+      const newHistory = [...qnaHistory, newQnA];
+      const newIndex = newHistory.length - 1;
+
+      setQnaHistory(newHistory);
+      setSelectedQnAIndex(newIndex); // Select the newly added QnA
+      setSelectedSubtopic(null); // Clear subtopic selection
       setViewMode('qna'); // Switch view to show Q&A
 
       // Add a system message to chat indicating where the answer is
-      const systemMessage: Message = { id: (Date.now() + 1).toString(), sender: 'system', text: 'Answer displayed in the main content area.', timestamp: new Date() };
+      const systemMessage: Message = { id: (Date.now() + 1).toString(), sender: 'system', text: `Answer added to the 'Q&A #${newIndex + 1}' section in the sidebar and displayed in the main content area.`, timestamp: new Date() };
       setChatMessages(prev => [...prev, systemMessage]);
 
     } catch (error: any) {
@@ -212,7 +232,7 @@ export default function Home() {
       // Display error in chat
       const errorAiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: chatErrorMessage, timestamp: new Date() };
       setChatMessages(prev => [...prev, errorAiMessage]);
-      setViewMode(selectedSubtopic ? 'subtopic' : 'outline'); // Revert view mode on error
+      // Don't revert view mode, keep the user context
 
       toast({
         title: "Error Answering Question",
@@ -335,7 +355,7 @@ export default function Home() {
                       <FormattedText text={tutoringContent.problem} />
                   </div>
               )}
-              <p className="text-muted-foreground mt-4">Select a subtopic from the sidebar or ask a question below.</p>
+              <p className="text-muted-foreground mt-4">Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.</p>
             </div>
           );
 
@@ -370,10 +390,10 @@ export default function Home() {
            );
 
         case 'qna':
-           if (isAnsweringQuestion) {
+           if (isAnsweringQuestion && selectedQnAIndex === qnaHistory.length - 1) { // Show loading only for the *newest* QnA being generated
              return (
                <div className="bg-card p-6 rounded-lg shadow space-y-4">
-                  <p className="text-lg font-semibold text-primary">Getting answer...</p>
+                  <p className="text-lg font-semibold text-primary">Getting answer for Q&amp;A #{selectedQnAIndex + 1}...</p>
                   <Skeleton className="h-6 w-1/4" />
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-5/6" />
@@ -381,17 +401,18 @@ export default function Home() {
                </div>
              );
            }
-          if (currentQnA) {
+          const currentQnA = selectedQnAIndex !== null ? qnaHistory[selectedQnAIndex] : null;
+          if (currentQnA && selectedQnAIndex !== null) {
             return (
               <Card className="bg-card p-6 rounded-lg shadow">
                   <CardHeader>
                       <CardTitle className="text-xl font-semibold text-primary flex items-center gap-2">
-                         <HelpCircle /> Question & Answer
+                         <HelpCircle /> Q&amp;A #{selectedQnAIndex + 1}
                       </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                       <div>
-                         <p className="font-semibold text-lg mb-2">Your Question:</p>
+                         <p className="font-semibold text-lg mb-2">Question:</p>
                          <p className="ml-4 italic">{currentQnA.question}</p>
                       </div>
                       <hr className="border-border"/>
@@ -405,7 +426,7 @@ export default function Home() {
           }
            return (
               <div className="bg-card p-6 rounded-lg shadow">
-                  <p>Ask a question using the chat interface below.</p>
+                  <p>Select a Q&amp;A from the sidebar or ask a question using the chat interface below.</p>
               </div>
            );
 
@@ -423,9 +444,12 @@ export default function Home() {
                   <SubtopicSidebar
                     topic={topic}
                     subtopics={tutoringContent.subtopics}
+                    qnaHistory={qnaHistory} // Pass Q&A history
                     selectedSubtopic={selectedSubtopic}
+                    selectedQnAIndex={selectedQnAIndex} // Pass selected Q&A index
                     onSubtopicSelect={handleSubtopicSelect}
-                    currentView={viewMode} // Pass current view mode for highlighting
+                    onQnASelect={handleQnASelect} // Pass Q&A selection handler
+                    currentView={viewMode}
                   />
                 </SidebarContent>
             </Sidebar>
@@ -450,28 +474,29 @@ export default function Home() {
                     </header>
 
                      <main className="flex-1 overflow-hidden">
-                       <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6">
-                         {/* Main Content Area (Left/Top) */}
-                          <div className="lg:col-span-2 space-y-6 overflow-y-auto">
+                        {/* Adjusted grid layout */}
+                       <div className="h-full grid grid-cols-1 lg:grid-cols-10 gap-6 p-4 md:p-6">
+                         {/* Main Content Area (Takes up more space) */}
+                          <div className="lg:col-span-7 space-y-6 overflow-y-auto"> {/* Changed from lg:col-span-2 */}
                               {renderMainContent()}
                           </div>
 
-                          {/* Chat Interface Area (Right/Bottom) */}
+                          {/* Chat Interface Area (Takes up less space) */}
                          {tutoringContent && (
-                              <div className="lg:col-span-1 h-full flex flex-col">
+                              <div className="lg:col-span-3 h-full flex flex-col"> {/* Changed from lg:col-span-1 */}
                                  <ChatInterface
                                      messages={chatMessages}
                                      onSendMessage={handleSendMessage}
                                      isLoading={isAnsweringQuestion}
                                      disabled={!tutoringContent || isGeneratingContent}
-                                     className="flex-1 min-h-0"
+                                     className="flex-1 min-h-0" // Ensures chat takes remaining height
                                  />
                               </div>
                           )}
 
                           {/* Show form again if generation failed and no topic set */}
                          {!tutoringContent && !isGeneratingContent && !topic && (
-                             <div className="lg:col-span-3">
+                             <div className="lg:col-span-10"> {/* Spans full width */}
                                  <div className="bg-card p-6 rounded-lg shadow max-w-2xl mx-auto">
                                      <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
                                  </div>

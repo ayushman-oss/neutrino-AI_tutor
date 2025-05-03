@@ -4,9 +4,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator'; // Import Separator
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { List, BookOpen, HelpCircle } from 'lucide-react'; // Import necessary icons
+import { List, BookOpen, HelpCircle, FileQuestion, CheckSquare, Lock } from 'lucide-react'; // Added CheckSquare, Lock
+import type { ViewMode } from '@/app/page'; // Import ViewMode type
+
 
 interface QnARecord {
   question: string;
@@ -16,12 +18,15 @@ interface QnARecord {
 interface SubtopicSidebarProps {
   topic: string;
   subtopics: string[];
-  qnaHistory: QnARecord[]; // Add Q&A history
+  qnaHistory: QnARecord[];
   selectedSubtopic: string | null;
-  selectedQnAIndex: number | null; // Add selected Q&A index
+  selectedQnAIndex: number | null;
   onSubtopicSelect: (subtopic: string | null) => void;
-  onQnASelect: (index: number | null) => void; // Add Q&A selection handler
-  currentView: 'outline' | 'subtopic' | 'qna';
+  onQnASelect: (index: number | null) => void;
+  onQuizSelect: () => void; // Handler for selecting the quiz
+  currentView: ViewMode;
+  viewedSubtopics: Set<string>; // Set of viewed subtopic names
+  isQuizAvailable: boolean; // Flag indicating if quiz can be taken
 }
 
 export function SubtopicSidebar({
@@ -32,10 +37,13 @@ export function SubtopicSidebar({
   selectedQnAIndex,
   onSubtopicSelect,
   onQnASelect,
+  onQuizSelect,
   currentView,
+  viewedSubtopics,
+  isQuizAvailable,
 }: SubtopicSidebarProps) {
 
-   const isOutlineSelected = currentView === 'outline' || (currentView !== 'subtopic' && currentView !== 'qna');
+   const isOutlineSelected = currentView === 'outline';
 
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
@@ -47,38 +55,46 @@ export function SubtopicSidebar({
       </div>
       <ScrollArea className="flex-1">
         <nav className="p-2 space-y-1">
-           {/* Button to go back to Outline View */}
+           {/* Outline Button */}
            <Button
                 variant="ghost"
                 className={cn(
                   "w-full justify-start text-sm",
-                  isOutlineSelected && selectedQnAIndex === null // Highlight only if outline is the active view and no QnA is selected
+                  isOutlineSelected
                     ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                     : 'hover:bg-sidebar-accent/80'
                 )}
-                onClick={() => onSubtopicSelect(null)} // This should also implicitly trigger QnA deselect via parent logic
+                onClick={() => onSubtopicSelect(null)}
             >
                 <List className="mr-2 h-4 w-4" />
                 Outline / Overview
             </Button>
 
           {/* Subtopics Section */}
-          {subtopics.map((subtopic) => (
-            <Button
-              key={subtopic}
-              variant="ghost"
-              className={cn(
-                "w-full justify-start text-sm truncate",
-                currentView === 'subtopic' && selectedSubtopic === subtopic
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'hover:bg-sidebar-accent/80'
-              )}
-              onClick={() => onSubtopicSelect(subtopic)}
-              title={subtopic}
-            >
-              <span className="flex-grow text-left">{subtopic}</span>
-            </Button>
-          ))}
+          {subtopics.map((subtopic) => {
+            const isViewed = viewedSubtopics.has(subtopic);
+            return (
+                <Button
+                key={subtopic}
+                variant="ghost"
+                className={cn(
+                    "w-full justify-start text-sm truncate",
+                    currentView === 'subtopic' && selectedSubtopic === subtopic
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'hover:bg-sidebar-accent/80'
+                )}
+                onClick={() => onSubtopicSelect(subtopic)}
+                title={subtopic}
+                >
+                 {isViewed ? (
+                    <CheckSquare className="mr-2 h-4 w-4 text-green-500" />
+                 ) : (
+                    <span className="mr-2 h-4 w-4"></span> // Placeholder for alignment
+                 )}
+                <span className="flex-grow text-left">{subtopic}</span>
+                </Button>
+            );
+           })}
 
            {/* Q&A Section */}
            {qnaHistory.length > 0 && (
@@ -105,8 +121,40 @@ export function SubtopicSidebar({
                   ))}
                </>
            )}
+
+            {/* Quiz Section */}
+            <>
+               <Separator className="my-2 bg-sidebar-border" />
+               <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start text-sm",
+                    currentView === 'quiz'
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'hover:bg-sidebar-accent/80',
+                    !isQuizAvailable && 'opacity-50 cursor-not-allowed hover:bg-transparent' // Style for disabled state
+                  )}
+                  onClick={onQuizSelect}
+                  disabled={!isQuizAvailable}
+                  title={isQuizAvailable ? "Take the quiz!" : "View all subtopics to unlock the quiz"}
+                >
+                  {isQuizAvailable ? <FileQuestion className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
+                  Quiz
+                </Button>
+            </>
+
         </nav>
       </ScrollArea>
+      {/* Progress indicator (optional) */}
+       <div className="p-2 border-t border-sidebar-border text-xs text-center text-sidebar-foreground/70">
+          {subtopics.length > 0 ? (
+            <span>
+               {viewedSubtopics.size} / {subtopics.length} subtopics viewed
+             </span>
+           ) : (
+             <span>Loading subtopics...</span>
+           )}
+       </div>
     </div>
   );
 }

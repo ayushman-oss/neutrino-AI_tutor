@@ -31,7 +31,7 @@ interface QnARecord {
 
 // Constants for fixed heights/padding if needed
 const CHAT_INPUT_AREA_HEIGHT = 'h-[88px]'; // Approximate height including padding and input growth potential
-const CHAT_INPUT_AREA_PADDING_BOTTOM = 'pb-[88px]'; // Matching padding-bottom for scroll area
+const CHAT_SCROLL_PADDING_BOTTOM = 'pb-[100px]'; // Increased padding-bottom for scroll area to prevent content overlap
 
 export default function Home() {
   const [urgency, setUrgency] = useState<'high' | 'medium' | 'low' | ''>('');
@@ -275,7 +275,7 @@ export default function Home() {
      if (isGeneratingContent) {
           return (
               <div className="flex-1 overflow-y-auto p-4 md:p-6 w-full">
-                  <div className="bg-card p-6 rounded-lg shadow space-y-4 w-full mx-auto">
+                  <div className="bg-card p-6 rounded-lg shadow space-y-4 w-full mx-auto max-w-4xl">
                       <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
                       <Skeleton className="h-8 w-1/2 mx-auto" />
                       <Skeleton className="h-4 w-3/4" />
@@ -301,9 +301,9 @@ export default function Home() {
       }
 
       // Main content area when tutoringContent exists
-      // Use padding-bottom to avoid content being hidden by the fixed chat input
+      // Apply padding-bottom to avoid content being hidden by the fixed chat input
       return (
-         <div className={`flex-1 overflow-y-auto p-4 md:p-6 w-full ${CHAT_INPUT_AREA_PADDING_BOTTOM}`}>
+         <div className={`flex-1 overflow-y-auto p-4 md:p-6 w-full ${CHAT_SCROLL_PADDING_BOTTOM}`}>
              <div className="w-full max-w-4xl mx-auto"> {/* Constrain content width for readability */}
                  {viewMode === 'outline' && (
                      <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6">
@@ -408,7 +408,7 @@ export default function Home() {
 
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-         {/* Use h-dvh for full viewport height */}
+         {/* Use h-dvh for full viewport height and w-screen for full width */}
          <div className="h-dvh bg-secondary flex flex-col w-screen relative">
             {/* Header remains fixed */}
             <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">

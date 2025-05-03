@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { Message } from '@/components/edugemini/chat-interface';
 import { BrainCircuit, Download, Menu, BookOpen, ListTree, HelpCircle } from 'lucide-react';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
+// Use Sheet for sidebar universally
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { FormattedText } from '@/components/edugemini/formatted-text';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -28,6 +29,10 @@ interface QnARecord {
   answer: string;
 }
 
+// Constants for fixed heights/padding if needed
+const CHAT_INPUT_AREA_HEIGHT = 'h-[88px]'; // Approximate height including padding and input growth potential
+const CHAT_INPUT_AREA_PADDING_BOTTOM = 'pb-[88px]'; // Matching padding-bottom for scroll area
+
 export default function Home() {
   const [urgency, setUrgency] = useState<'high' | 'medium' | 'low' | ''>('');
   const [topic, setTopic] = useState('');
@@ -35,18 +40,16 @@ export default function Home() {
   const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
   const [subtopicDetails, setSubtopicDetails] = useState<GenerateSubtopicDetailsOutput | null>(null);
   const [subtopicDetailCache, setSubtopicDetailCache] = useState<SubtopicDetailCache>({});
-  // Removed chatMessages state
   const [learningProgress, setLearningProgress] = useState(''); // Kept for potential future use
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
   const [isGeneratingSubtopic, setIsGeneratingSubtopic] = useState(false);
   const [isAnsweringQuestion, setIsAnsweringQuestion] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const { toast } = useToast();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default sidebar open state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Default sidebar closed state
 
   // State for Q&A handling
   const [viewMode, setViewMode] = useState<'outline' | 'subtopic' | 'qna'>('outline');
-  // Removed currentQnA state, will derive from history and selected index
   const [qnaHistory, setQnaHistory] = useState<QnARecord[]>([]); // History of Q&A pairs
   const [selectedQnAIndex, setSelectedQnAIndex] = useState<number | null>(null); // Index of the selected Q&A
 
@@ -61,11 +64,12 @@ export default function Home() {
       fetchSubtopicDetails(selectedSubtopic);
     } else if (viewMode === 'outline') {
         setSubtopicDetails(null); // Clear details when viewing outline
-        // Don't clear QnA, just ensure nothing is selected
         setSelectedQnAIndex(null);
     }
+    // Close sidebar when selection changes
+    setIsSidebarOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, selectedSubtopic]); // Run when viewMode or selectedSubtopic changes
+  }, [viewMode, selectedSubtopic, selectedQnAIndex]); // Run when viewMode, subtopic or QnA selection changes
 
   const handleGenerateContent = async (data: UrgencyTopicFormData) => {
     setIsGeneratingContent(true);
@@ -73,29 +77,25 @@ export default function Home() {
     setSelectedSubtopic(null);
     setSubtopicDetails(null);
     setSubtopicDetailCache({});
-    // Removed chat message clearing
-    setQnaHistory([]); // Clear Q&A history
-    setSelectedQnAIndex(null); // Clear selected Q&A
+    setQnaHistory([]);
+    setSelectedQnAIndex(null);
     setUrgency(data.urgency);
     setTopic(data.topic);
     setLearningProgress('');
-    setViewMode('outline'); // Start in outline view
+    setViewMode('outline');
+    setIsSidebarOpen(false); // Close sidebar on new content generation
 
     try {
       const content = await generateTutoringContent({ topic: data.topic, urgency: data.urgency });
       setTutoringContent(content);
-      // Removed chat message clearing
     } catch (error: any) {
         console.error("Error generating tutoring content:", error);
         let description = "Failed to generate tutoring content. Please try again.";
-        // Removed chatErrorMessage variable
 
         if (error.message?.includes('503') || error.message?.includes('overloaded')) {
             description = "The AI service is currently overloaded. Please try again shortly.";
-            // Removed chatErrorMessage update
         } else if (error.message?.includes('Invalid output format') || error.message?.includes('template error')) {
             description = "There was an issue formatting the content. Please try again.";
-            // Removed chatErrorMessage update
         } else {
             description = error.message || description;
         }
@@ -157,10 +157,9 @@ export default function Home() {
 
   const handleSubtopicSelect = (subtopic: string | null) => {
     setSelectedSubtopic(subtopic);
-    setSelectedQnAIndex(null); // Clear QnA selection when navigating subtopics/outline
+    setSelectedQnAIndex(null);
     if (subtopic) {
         setViewMode('subtopic');
-        // Fetching details is handled by the useEffect
     } else {
         setViewMode('outline');
     }
@@ -168,19 +167,16 @@ export default function Home() {
 
    const handleQnASelect = (index: number | null) => {
        setSelectedQnAIndex(index);
-       setSelectedSubtopic(null); // Clear subtopic selection
+       setSelectedSubtopic(null);
        if (index !== null) {
            setViewMode('qna');
        } else {
-           // If index is null, default to outline view
            setViewMode('outline');
        }
    };
 
   const handleSendMessage = async (message: string) => {
     if (!topic || !urgency || !tutoringContent) return;
-
-    // Don't add user message to chat history UI
 
     setIsAnsweringQuestion(true);
 
@@ -190,20 +186,19 @@ export default function Home() {
           question: message,
           urgency: urgency,
           learningProgress: learningProgress,
-          // Pass selected subtopic context if viewing a subtopic
           selectedSubtopic: viewMode === 'subtopic' ? selectedSubtopic || undefined : undefined,
       };
       const response = await answerEngineeringQuestion(input);
       const newQnA = { question: message, answer: response.answer };
 
-      // Add the new QnA to the history and get its index
       const newHistory = [...qnaHistory, newQnA];
       const newIndex = newHistory.length - 1;
 
       setQnaHistory(newHistory);
-      setSelectedQnAIndex(newIndex); // Select the newly added QnA
-      setSelectedSubtopic(null); // Clear subtopic selection
-      setViewMode('qna'); // Switch view to show Q&A
+      setSelectedQnAIndex(newIndex);
+      setSelectedSubtopic(null);
+      setViewMode('qna');
+      setIsSidebarOpen(false); // Close sidebar after asking question
 
     } catch (error: any) {
       console.error("Error answering question:", error);
@@ -217,13 +212,11 @@ export default function Home() {
           description = error.message || description;
       }
 
-      // Display error using toast
       toast({
         title: "Error Answering Question",
         description: description,
         variant: "destructive",
       });
-      // No chat error message needed as history is hidden
     } finally {
       setIsAnsweringQuestion(false);
     }
@@ -247,7 +240,6 @@ export default function Home() {
          if (details.formula) contentString += `Formula:\n${details.formula}\n\n`;
      });
 
-    // Include Q&A History
     contentString += `\n== Questions & Answers ==\n`;
     qnaHistory.forEach((qna, index) => {
         contentString += `\n--- Q&A #${index + 1} ---\n`;
@@ -272,7 +264,7 @@ export default function Home() {
 
   if (initialLoad) {
     return (
-      <div className="h-dvh bg-secondary flex flex-col items-center justify-center p-4 md:p-8 w-screen"> {/* Ensure full width */}
+      <div className="h-dvh bg-secondary flex flex-col items-center justify-center p-4 md:p-8 w-screen">
         <Skeleton className="h-16 w-full mb-4" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -282,15 +274,17 @@ export default function Home() {
   const renderMainContent = () => {
      if (isGeneratingContent) {
           return (
-              <div className="bg-card p-6 rounded-lg shadow space-y-4 w-full mx-auto mt-8"> {/* Ensure full width */}
-                  <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
-                  <Skeleton className="h-8 w-1/2 mx-auto" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-10 w-full" />
-               </div>
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 w-full">
+                  <div className="bg-card p-6 rounded-lg shadow space-y-4 w-full mx-auto">
+                      <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
+                      <Skeleton className="h-8 w-1/2 mx-auto" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                   </div>
+              </div>
            );
       }
 
@@ -298,7 +292,7 @@ export default function Home() {
       if (!tutoringContent) {
            return (
                // Centered form container
-               <div className="flex-1 flex items-center justify-center p-4 md:p-6 w-full"> {/* Ensure full width */}
+               <div className="flex-1 flex items-center justify-center p-4 md:p-6 w-full">
                    <div className="bg-card p-6 rounded-lg shadow max-w-2xl w-full">
                       <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
                    </div>
@@ -307,11 +301,10 @@ export default function Home() {
       }
 
       // Main content area when tutoringContent exists
+      // Use padding-bottom to avoid content being hidden by the fixed chat input
       return (
-         // Scrollable content area
-         <div className="flex-1 overflow-y-auto p-4 md:p-6 w-full"> {/* Ensure full width */}
-             {/* Ensure container takes full width */}
-             <div className="w-full mx-auto"> {/* Ensure full width */}
+         <div className={`flex-1 overflow-y-auto p-4 md:p-6 w-full ${CHAT_INPUT_AREA_PADDING_BOTTOM}`}>
+             <div className="w-full max-w-4xl mx-auto"> {/* Constrain content width for readability */}
                  {viewMode === 'outline' && (
                      <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6">
                          <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
@@ -360,7 +353,7 @@ export default function Home() {
                                     content={subtopicDetails}
                                     selectedSubtopic={selectedSubtopic}
                                     urgency={urgency as 'high' | 'medium' | 'low'}
-                                    topic={topic} // Pass topic for image search hint
+                                    topic={topic}
                                 />
                             </div>
                          ) : (
@@ -414,23 +407,29 @@ export default function Home() {
 
 
   return (
-     <SidebarProvider defaultOpen={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-         {/* Use h-dvh (dynamic viewport height) */}
-         <div className="h-dvh bg-secondary flex flex-col w-screen"> {/* Ensure full width */}
+    <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+         {/* Use h-dvh for full viewport height */}
+         <div className="h-dvh bg-secondary flex flex-col w-screen relative">
             {/* Header remains fixed */}
             <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
                 <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
-                    {/* Show sidebar trigger only when content exists */}
-                    {tutoringContent && (
-                        <SidebarTrigger className="md:hidden text-primary-foreground hover:bg-primary/80 flex-shrink-0" />
-                    )}
+                    {/* Always show trigger, disable if no content */}
+                    <SheetTrigger asChild>
+                         <Button
+                             variant="ghost"
+                             size="icon"
+                             className="text-primary-foreground hover:bg-primary/80 flex-shrink-0 h-7 w-7 md:h-8 md:w-8"
+                             disabled={!tutoringContent}
+                             aria-label="Toggle Sidebar"
+                         >
+                            <Menu className="h-5 w-5" />
+                         </Button>
+                    </SheetTrigger>
                     <BrainCircuit size={24} className="flex-shrink-0 md:hidden" />
                     <BrainCircuit size={28} className="flex-shrink-0 hidden md:block" />
                     <h1 className="text-lg md:text-2xl font-bold truncate">EduGemini</h1>
-                    {/* Display topic only if available */}
                     {topic && <span className="text-sm md:text-base opacity-80 hidden sm:inline">| {topic}</span>}
                 </div>
-                {/* Show export button only when content exists */}
                 {tutoringContent && (
                 <Button variant="secondary" size="sm" onClick={handleExportContent} className="flex-shrink-0">
                     <Download className="mr-1 md:mr-2 h-4 w-4" />
@@ -440,12 +439,31 @@ export default function Home() {
                 )}
             </header>
 
-            {/* Main Content Area */}
-            <div className="flex flex-1 overflow-hidden h-full w-full"> {/* Ensure full width */}
-                {/* Sidebar */}
-                {tutoringContent && (
-                <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r border-border">
-                    <SidebarContent className="p-0">
+            {/* Main Content Area (takes remaining space) */}
+            <div className="flex flex-col flex-1 overflow-hidden w-full">
+                 {/* Render the main content (scrollable) */}
+                 {renderMainContent()}
+            </div>
+
+            {/* Fixed Chat Input Area at the bottom */}
+             {tutoringContent && (
+                 <div className={`fixed bottom-0 left-0 right-0 z-10 bg-background border-t px-4 py-3 shadow-md ${CHAT_INPUT_AREA_HEIGHT}`}>
+                    <div className="max-w-4xl mx-auto"> {/* Constrain width */}
+                        <ChatInterface
+                            messages={[]}
+                            onSendMessage={handleSendMessage}
+                            isLoading={isAnsweringQuestion}
+                            disabled={!tutoringContent || isGeneratingContent}
+                            showHistory={false}
+                            className="w-full"
+                        />
+                    </div>
+                 </div>
+             )}
+
+             {/* Sidebar Content (Sheet) */}
+             <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
+                 {tutoringContent && (
                     <SubtopicSidebar
                         topic={topic}
                         subtopics={tutoringContent.subtopics}
@@ -456,31 +474,9 @@ export default function Home() {
                         onQnASelect={handleQnASelect}
                         currentView={viewMode}
                     />
-                    </SidebarContent>
-                </Sidebar>
-                )}
-
-                {/* Content and Chat area */}
-                <SidebarInset className="flex flex-col flex-1 overflow-hidden w-full"> {/* Ensure full width */}
-                    {/* Render the main content */}
-                    {renderMainContent()}
-
-                    {/* Fixed Chat Input Area */}
-                    {tutoringContent && (
-                        <div className="flex-shrink-0 px-4 md:px-6 py-3 border-t bg-background"> {/* Adjusted padding */}
-                            <ChatInterface
-                                messages={[]}
-                                onSendMessage={handleSendMessage}
-                                isLoading={isAnsweringQuestion}
-                                disabled={!tutoringContent || isGeneratingContent}
-                                showHistory={false}
-                                className="border rounded-lg shadow-sm w-full mx-auto" // Ensure full width
-                            />
-                        </div>
-                    )}
-                </SidebarInset>
-             </div>
+                 )}
+            </SheetContent>
          </div>
-      </SidebarProvider>
+      </Sheet>
    );
  }

@@ -34,14 +34,14 @@ export default function Home() {
   const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
   const [subtopicDetails, setSubtopicDetails] = useState<GenerateSubtopicDetailsOutput | null>(null);
   const [subtopicDetailCache, setSubtopicDetailCache] = useState<SubtopicDetailCache>({});
-  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  // Removed chatMessages state
   const [learningProgress, setLearningProgress] = useState(''); // Kept for potential future use
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
   const [isGeneratingSubtopic, setIsGeneratingSubtopic] = useState(false);
   const [isAnsweringQuestion, setIsAnsweringQuestion] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const { toast } = useToast();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default sidebar open state
 
   // State for Q&A handling
   const [viewMode, setViewMode] = useState<'outline' | 'subtopic' | 'qna'>('outline');
@@ -72,7 +72,7 @@ export default function Home() {
     setSelectedSubtopic(null);
     setSubtopicDetails(null);
     setSubtopicDetailCache({});
-    setChatMessages([]);
+    // Removed chat message clearing
     setQnaHistory([]); // Clear Q&A history
     setSelectedQnAIndex(null); // Clear selected Q&A
     setUrgency(data.urgency);
@@ -83,19 +83,18 @@ export default function Home() {
     try {
       const content = await generateTutoringContent({ topic: data.topic, urgency: data.urgency });
       setTutoringContent(content);
-      // Clear chat messages
-      setChatMessages([]);
+      // Removed chat message clearing
     } catch (error: any) {
         console.error("Error generating tutoring content:", error);
         let description = "Failed to generate tutoring content. Please try again.";
-        let chatErrorMessage = "Sorry, I encountered an error trying to generate content. Please try selecting the topic and urgency again.";
+        // Removed chatErrorMessage variable
 
         if (error.message?.includes('503') || error.message?.includes('overloaded')) {
             description = "The AI service is currently overloaded. Please try again shortly.";
-            chatErrorMessage = "Sorry, the AI service is overloaded. Try again soon.";
+            // Removed chatErrorMessage update
         } else if (error.message?.includes('Invalid output format') || error.message?.includes('template error')) {
             description = "There was an issue formatting the content. Please try again.";
-             chatErrorMessage = "Sorry, I had trouble formatting the content. Please try generating it again.";
+            // Removed chatErrorMessage update
         } else {
             description = error.message || description;
         }
@@ -105,8 +104,7 @@ export default function Home() {
             description: description,
             variant: "destructive",
         });
-        // Add error message to chat input area? No, chat history is hidden now.
-        // Just reset state.
+        // Reset state
         setTopic('');
         setUrgency('');
     } finally {
@@ -182,8 +180,6 @@ export default function Home() {
     if (!topic || !urgency || !tutoringContent) return;
 
     // Don't add user message to chat history UI
-    // const newUserMessage: Message = { id: Date.now().toString(), sender: 'user', text: message, timestamp: new Date() };
-    // setChatMessages(prev => [...prev, newUserMessage]);
 
     setIsAnsweringQuestion(true);
 
@@ -193,7 +189,6 @@ export default function Home() {
           question: message,
           urgency: urgency,
           learningProgress: learningProgress,
-          // selectedSubtopic: viewMode === 'subtopic' ? selectedSubtopic : undefined, // Keep context if needed? Maybe not for general Q&A.
       };
       const response = await answerEngineeringQuestion(input);
       const newQnA = { question: message, answer: response.answer };
@@ -257,15 +252,6 @@ export default function Home() {
         contentString += `Answer:\n${qna.answer}\n\n`;
     });
 
-
-    // Include Chat History (Messages) - Removed as chat history is hidden
-    // contentString += `\n== Chat History (Messages) ==\n`;
-    // chatMessages.forEach(msg => {
-    //     const prefix = msg.sender === 'user' ? 'USER' : (msg.sender === 'ai' ? 'AI' : 'SYSTEM');
-    //     const timestamp = msg.timestamp ? `[${msg.timestamp.toLocaleTimeString()}] ` : '';
-    //     contentString += `${timestamp}${prefix}: ${msg.text}\n`;
-    // });
-
     const blob = new Blob([contentString], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -284,8 +270,8 @@ export default function Home() {
   if (initialLoad) {
     return (
       <div className="min-h-screen bg-secondary flex flex-col items-center justify-center p-4 md:p-8">
-        <Skeleton className="h-16 w-full max-w-4xl mb-4" />
-        <Skeleton className="h-64 w-full max-w-4xl" />
+        <Skeleton className="h-16 w-full max-w-4xl lg:max-w-6xl mb-4" />
+        <Skeleton className="h-64 w-full max-w-4xl lg:max-w-6xl" />
       </div>
     );
   }
@@ -293,7 +279,7 @@ export default function Home() {
   const renderMainContent = () => {
      if (isGeneratingContent) {
           return (
-              <div className="bg-card p-6 rounded-lg shadow space-y-4 max-w-4xl mx-auto mt-8">
+              <div className="bg-card p-6 rounded-lg shadow space-y-4 max-w-4xl lg:max-w-6xl mx-auto mt-8">
                   <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
                   <Skeleton className="h-8 w-1/2 mx-auto" />
                   <Skeleton className="h-4 w-3/4" />
@@ -322,7 +308,7 @@ export default function Home() {
          // Scrollable content area
          <div className="flex-1 overflow-y-auto p-4 md:p-6">
               {viewMode === 'outline' && (
-                 <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6 max-w-4xl mx-auto">
+                 <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6 max-w-4xl lg:max-w-6xl mx-auto">
                      <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
                          <ListTree /> {topic} - Outline & Overview
                      </h2>
@@ -353,7 +339,7 @@ export default function Home() {
               )}
 
               {viewMode === 'subtopic' && (
-                  <div className="max-w-4xl mx-auto">
+                  <div className="max-w-4xl lg:max-w-6xl mx-auto">
                       {isGeneratingSubtopic ? (
                          <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
                              <p className="text-lg font-semibold text-primary">Loading details for "{selectedSubtopic}"...</p>
@@ -381,7 +367,7 @@ export default function Home() {
               )}
 
               {viewMode === 'qna' && (
-                  <div className="max-w-4xl mx-auto">
+                  <div className="max-w-4xl lg:max-w-6xl mx-auto">
                      {isAnsweringQuestion && selectedQnAIndex === qnaHistory.length - 1 ? (
                          <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
                               <p className="text-lg font-semibold text-primary">Getting answer for Q&amp;A #{selectedQnAIndex + 1}...</p>
@@ -417,7 +403,7 @@ export default function Home() {
                   </div>
               )}
               {(viewMode === 'outline' || viewMode === 'subtopic' || viewMode === 'qna') && (
-                <p className="text-muted-foreground mt-4 text-sm text-center max-w-4xl mx-auto">
+                <p className="text-muted-foreground mt-4 text-sm text-center max-w-4xl lg:max-w-6xl mx-auto">
                     {viewMode !== 'outline' && "Select 'Outline / Overview', "}
                     Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.
                 </p>
@@ -428,7 +414,7 @@ export default function Home() {
 
 
   return (
-     <SidebarProvider defaultOpen={true} onOpenChange={setIsSidebarOpen}>
+     <SidebarProvider defaultOpen={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
          <div className="min-h-screen bg-secondary flex flex-col"> {/* Ensure vertical layout */}
             {/* Header remains fixed at the top */}
             <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
@@ -487,7 +473,7 @@ export default function Home() {
                                 isLoading={isAnsweringQuestion}
                                 disabled={!tutoringContent || isGeneratingContent}
                                 showHistory={false} // Prop to hide history display
-                                className="border rounded-lg shadow-sm max-w-4xl mx-auto" // Center chat input
+                                className="border rounded-lg shadow-sm max-w-4xl lg:max-w-6xl mx-auto" // Center chat input, increased max-width
                             />
                         </div>
                     )}

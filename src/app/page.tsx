@@ -29,9 +29,9 @@ interface QnARecord {
   answer: string;
 }
 
-// Constants for fixed heights/padding if needed
-const CHAT_INPUT_AREA_HEIGHT = 'h-[88px]'; // Approximate height including padding and input growth potential
-const CHAT_SCROLL_PADDING_BOTTOM = 'pb-[100px]'; // Increased padding-bottom for scroll area to prevent content overlap
+// Removed constants related to fixed chat height/padding
+// const CHAT_INPUT_AREA_HEIGHT = 'h-[88px]';
+// const CHAT_SCROLL_PADDING_BOTTOM = 'pb-[100px]';
 
 export default function Home() {
   const [urgency, setUrgency] = useState<'high' | 'medium' | 'low' | ''>('');
@@ -129,7 +129,7 @@ export default function Home() {
       const input: GenerateSubtopicDetailsInput = {
         topic: topic,
         subtopic: subtopic,
-        urgency: urgency,
+        urgency: urgency as 'high' | 'medium' | 'low', // Ensure urgency is cast correctly
         learningProgress: learningProgress,
       };
       const details = await generateSubtopicDetails(input);
@@ -184,7 +184,7 @@ export default function Home() {
       const input: AnswerEngineeringQuestionInput = {
           topic: topic,
           question: message,
-          urgency: urgency,
+          urgency: urgency as 'high' | 'medium' | 'low', // Ensure urgency is cast correctly
           learningProgress: learningProgress,
           selectedSubtopic: viewMode === 'subtopic' ? selectedSubtopic || undefined : undefined,
       };
@@ -264,6 +264,7 @@ export default function Home() {
 
   if (initialLoad) {
     return (
+      // Use h-dvh and w-screen for initial loading state too
       <div className="h-dvh bg-secondary flex flex-col items-center justify-center p-4 md:p-8 w-screen">
         <Skeleton className="h-16 w-full mb-4" />
         <Skeleton className="h-64 w-full" />
@@ -274,6 +275,7 @@ export default function Home() {
   const renderMainContent = () => {
      if (isGeneratingContent) {
           return (
+              // Use flex-1 for loading state as well
               <div className="flex-1 overflow-y-auto p-4 md:p-6 w-full">
                   <div className="bg-card p-6 rounded-lg shadow space-y-4 w-full mx-auto max-w-4xl">
                       <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
@@ -291,7 +293,7 @@ export default function Home() {
       // Show form only if no content has been generated yet
       if (!tutoringContent) {
            return (
-               // Centered form container
+               // Centered form container, using flex-1
                <div className="flex-1 flex items-center justify-center p-4 md:p-6 w-full">
                    <div className="bg-card p-6 rounded-lg shadow max-w-2xl w-full">
                       <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
@@ -301,10 +303,10 @@ export default function Home() {
       }
 
       // Main content area when tutoringContent exists
-      // Apply padding-bottom to avoid content being hidden by the fixed chat input
+      // Apply flex-1 and overflow-y-auto. Padding removed from here, applied within content.
       return (
-         <div className={`flex-1 overflow-y-auto p-4 md:p-6 w-full ${CHAT_SCROLL_PADDING_BOTTOM}`}>
-             <div className="w-full max-w-4xl mx-auto"> {/* Constrain content width for readability */}
+         <div className={`flex-1 overflow-y-auto w-full`}>
+             <div className="w-full max-w-4xl mx-auto p-4 md:p-6"> {/* Apply padding here */}
                  {viewMode === 'outline' && (
                      <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6">
                          <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
@@ -408,9 +410,9 @@ export default function Home() {
 
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-         {/* Use h-dvh for full viewport height and w-screen for full width */}
-         <div className="h-dvh bg-secondary flex flex-col w-screen relative">
-            {/* Header remains fixed */}
+         {/* Use h-dvh for full viewport height, w-screen for full width, flex flex-col */}
+         <div className="h-dvh bg-secondary flex flex-col w-screen">
+            {/* Header remains fixed at the top (sticky) */}
             <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
                 <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
                     {/* Always show trigger, disable if no content */}
@@ -439,26 +441,25 @@ export default function Home() {
                 )}
             </header>
 
-            {/* Main Content Area (takes remaining space) */}
-            <div className="flex flex-col flex-1 overflow-hidden w-full">
-                 {/* Render the main content (scrollable) */}
-                 {renderMainContent()}
-            </div>
+            {/* Main Content Area (flex-1 makes it take remaining space) */}
+            {renderMainContent()}
 
-            {/* Fixed Chat Input Area at the bottom */}
+
+            {/* Footer Chat Input Area */}
              {tutoringContent && (
-                 <div className={`fixed bottom-0 left-0 right-0 z-10 bg-background border-t px-4 py-3 shadow-md ${CHAT_INPUT_AREA_HEIGHT}`}>
+                 // Use footer element, make it sticky if needed but standard flow is better
+                 <footer className={`flex-shrink-0 bg-background border-t px-4 py-3 shadow-md`}>
                     <div className="max-w-4xl mx-auto"> {/* Constrain width */}
                         <ChatInterface
                             messages={[]}
                             onSendMessage={handleSendMessage}
                             isLoading={isAnsweringQuestion}
                             disabled={!tutoringContent || isGeneratingContent}
-                            showHistory={false}
+                            showHistory={false} // Keep history hidden
                             className="w-full"
                         />
                     </div>
-                 </div>
+                 </footer>
              )}
 
              {/* Sidebar Content (Sheet) */}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -189,6 +190,8 @@ export default function Home() {
           question: message,
           urgency: urgency,
           learningProgress: learningProgress,
+          // Pass selected subtopic context if viewing a subtopic
+          selectedSubtopic: viewMode === 'subtopic' ? selectedSubtopic || undefined : undefined,
       };
       const response = await answerEngineeringQuestion(input);
       const newQnA = { question: message, answer: response.answer };
@@ -269,7 +272,7 @@ export default function Home() {
 
   if (initialLoad) {
     return (
-      <div className="min-h-screen bg-secondary flex flex-col items-center justify-center p-4 md:p-8">
+      <div className="h-dvh bg-secondary flex flex-col items-center justify-center p-4 md:p-8">
         <Skeleton className="h-16 w-full max-w-4xl lg:max-w-6xl mb-4" />
         <Skeleton className="h-64 w-full max-w-4xl lg:max-w-6xl" />
       </div>
@@ -415,7 +418,8 @@ export default function Home() {
 
   return (
      <SidebarProvider defaultOpen={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-         <div className="min-h-screen bg-secondary flex flex-col"> {/* Ensure vertical layout */}
+         {/* Use h-dvh (dynamic viewport height) instead of min-h-screen */}
+         <div className="h-dvh bg-secondary flex flex-col">
             {/* Header remains fixed at the top */}
             <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
                 <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
@@ -439,8 +443,8 @@ export default function Home() {
                 )}
             </header>
 
-            {/* Main Content Area (flex-1 to take remaining space) */}
-            <div className="flex flex-1 overflow-hidden"> {/* Allow content to scroll */}
+            {/* Main Content Area (flex-1 to take remaining space, ensure height fill) */}
+            <div className="flex flex-1 overflow-hidden h-full"> {/* Ensure this flex container fills height */}
                 {/* Sidebar is only rendered if content exists */}
                 {tutoringContent && (
                 <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r border-border">
@@ -483,3 +487,5 @@ export default function Home() {
       </SidebarProvider>
    );
  }
+
+    

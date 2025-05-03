@@ -317,7 +317,7 @@ const SidebarRail = React.forwardRef<
 })
 SidebarRail.displayName = "SidebarRail"
 
-// Refined SidebarInset for better dynamic scaling
+// Refined SidebarInset for better dynamic scaling with explicit margins
 const SidebarInset = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"main">
@@ -326,30 +326,43 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        "relative flex min-h-svh flex-1 flex-col bg-background transition-[margin-left,margin-right] duration-200 ease-linear",
-         // Default state (expanded sidebar)
-         "md:peer-data-[side=left]:ml-[--sidebar-width] md:peer-data-[side=right]:mr-[--sidebar-width]",
-         // Collapsed state (icon sidebar)
-         "md:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=left]:ml-[--sidebar-width-icon]",
-         "md:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=right]:mr-[--sidebar-width-icon]",
-         // Collapsed state (offcanvas sidebar)
-         "md:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=left]:ml-0",
-         "md:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=right]:mr-0",
-         // Inset variant adjustments
-         "md:peer-data-[variant=inset]:m-2",
-         "md:peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))]",
-         "md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
-         // Inset + Left Sidebar (Expanded)
-         "md:peer-data-[variant=inset]:peer-data-[side=left]:peer-data-[state=expanded]:ml-[calc(var(--sidebar-width)_+_theme(spacing.2))]",
-         // Inset + Right Sidebar (Expanded)
-         "md:peer-data-[variant=inset]:peer-data-[side=right]:peer-data-[state=expanded]:mr-[calc(var(--sidebar-width)_+_theme(spacing.2))]",
-         // Inset + Left Sidebar (Collapsed Icon)
-         "md:peer-data-[variant=inset]:peer-data-[side=left]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:ml-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
-         // Inset + Right Sidebar (Collapsed Icon)
-         "md:peer-data-[variant=inset]:peer-data-[side=right]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:mr-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
-         // Inset + Collapsed Offcanvas (Left & Right) - margin remains theme(spacing.2)
-         "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=left]:ml-2",
-         "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=right]:mr-2",
+        "relative flex min-h-svh flex-1 flex-col bg-background transition-[margin] duration-200 ease-linear",
+        // Standard Sidebar (Not Inset)
+        "md:peer-data-[variant=sidebar]:peer-data-[state=expanded]:peer-data-[side=left]:ml-[--sidebar-width]",
+        "md:peer-data-[variant=sidebar]:peer-data-[state=expanded]:peer-data-[side=right]:mr-[--sidebar-width]",
+        "md:peer-data-[variant=sidebar]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=left]:ml-[--sidebar-width-icon]",
+        "md:peer-data-[variant=sidebar]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=right]:mr-[--sidebar-width-icon]",
+        "md:peer-data-[variant=sidebar]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=left]:ml-0", // No margin when offcanvas collapsed
+        "md:peer-data-[variant=sidebar]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=right]:mr-0", // No margin when offcanvas collapsed
+
+        // Inset & Floating Variant Margins (m-2 applied via peer-data)
+        "md:peer-data-[variant=inset]:m-2",
+        "md:peer-data-[variant=floating]:m-2",
+        "md:peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))]",
+        "md:peer-data-[variant=floating]:min-h-[calc(100svh-theme(spacing.4))]",
+        "md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
+        "md:peer-data-[variant=floating]:rounded-xl md:peer-data-[variant=floating]:shadow",
+
+        // Inset/Floating + Left Sidebar (Expanded) - Add sidebar width to existing margin
+        "md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=left]:ml-[calc(var(--sidebar-width)_+_theme(spacing.2))]",
+        "md:peer-data-[variant=floating]:peer-data-[state=expanded]:peer-data-[side=left]:ml-[calc(var(--sidebar-width)_+_theme(spacing.2))]",
+        // Inset/Floating + Right Sidebar (Expanded) - Add sidebar width to existing margin
+        "md:peer-data-[variant=inset]:peer-data-[state=expanded]:peer-data-[side=right]:mr-[calc(var(--sidebar-width)_+_theme(spacing.2))]",
+        "md:peer-data-[variant=floating]:peer-data-[state=expanded]:peer-data-[side=right]:mr-[calc(var(--sidebar-width)_+_theme(spacing.2))]",
+
+        // Inset/Floating + Left Sidebar (Collapsed Icon) - Add icon width to existing margin
+        "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=left]:ml-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
+        "md:peer-data-[variant=floating]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=left]:ml-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
+        // Inset/Floating + Right Sidebar (Collapsed Icon) - Add icon width to existing margin
+        "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=right]:mr-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
+        "md:peer-data-[variant=floating]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=right]:mr-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
+
+        // Inset/Floating + Collapsed Offcanvas (Left & Right) - Keep base margin (m-2)
+        "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=left]:ml-2",
+        "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=right]:mr-2",
+        "md:peer-data-[variant=floating]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=left]:ml-2",
+        "md:peer-data-[variant=floating]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=right]:mr-2",
+
         className
       )}
       style={style} // Pass through style prop

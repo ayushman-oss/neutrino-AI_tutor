@@ -493,14 +493,6 @@ export default function Home() {
                             </div>
                         )}
 
-                        {/* Initial form handling when no content is loaded - adjusted this logic */}
-                        {!tutoringContent && !isGeneratingContent && (
-                            <div className="flex-1 flex items-center justify-center">
-                                <div className="w-full max-w-2xl">
-                                     {renderMainContent()} {/* Renders the form via renderMainContent */}
-                                </div>
-                            </div>
-                        )}
                      </main>
                  </div>
              </SidebarInset>
@@ -508,5 +500,3 @@ export default function Home() {
       </SidebarProvider>
    );
  }
-
-    

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -224,24 +225,26 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
+            "duration-200 relative h-svh bg-transparent transition-[width] ease-linear",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
-            variant === "floating" || variant === "inset"
-              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+             variant === "floating" || variant === "inset"
+               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
+               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
+             "group-data-[state=expanded]:w-[--sidebar-width]", // Explicit width for expanded state
           )}
         />
         <div
           className={cn(
-            "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
+            "duration-200 fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] ease-linear md:flex",
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-            // Adjust the padding for floating and inset variants.
-            variant === "floating" || variant === "inset"
-              ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            // Adjust the padding and width for floating and inset variants.
+             variant === "floating" || variant === "inset"
+               ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
+               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+             "group-data-[state=expanded]:w-[--sidebar-width]", // Explicit width for expanded state
             className
           )}
           {...props}
@@ -314,23 +317,48 @@ const SidebarRail = React.forwardRef<
 })
 SidebarRail.displayName = "SidebarRail"
 
+// Refined SidebarInset for better dynamic scaling
 const SidebarInset = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"main">
->(({ className, ...props }, ref) => {
+>(({ className, style, ...props }, ref) => {
   return (
     <main
       ref={ref}
       className={cn(
-        "relative flex min-h-svh flex-1 flex-col bg-background",
-        "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
+        "relative flex min-h-svh flex-1 flex-col bg-background transition-[margin-left,margin-right] duration-200 ease-linear",
+         // Default state (expanded sidebar)
+         "md:peer-data-[side=left]:ml-[--sidebar-width] md:peer-data-[side=right]:mr-[--sidebar-width]",
+         // Collapsed state (icon sidebar)
+         "md:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=left]:ml-[--sidebar-width-icon]",
+         "md:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=right]:mr-[--sidebar-width-icon]",
+         // Collapsed state (offcanvas sidebar)
+         "md:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=left]:ml-0",
+         "md:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=right]:mr-0",
+         // Inset variant adjustments
+         "md:peer-data-[variant=inset]:m-2",
+         "md:peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))]",
+         "md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
+         // Inset + Left Sidebar (Expanded)
+         "md:peer-data-[variant=inset]:peer-data-[side=left]:peer-data-[state=expanded]:ml-[calc(var(--sidebar-width)_+_theme(spacing.2))]",
+         // Inset + Right Sidebar (Expanded)
+         "md:peer-data-[variant=inset]:peer-data-[side=right]:peer-data-[state=expanded]:mr-[calc(var(--sidebar-width)_+_theme(spacing.2))]",
+         // Inset + Left Sidebar (Collapsed Icon)
+         "md:peer-data-[variant=inset]:peer-data-[side=left]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:ml-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
+         // Inset + Right Sidebar (Collapsed Icon)
+         "md:peer-data-[variant=inset]:peer-data-[side=right]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:mr-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]",
+         // Inset + Collapsed Offcanvas (Left & Right) - margin remains theme(spacing.2)
+         "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=left]:ml-2",
+         "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[collapsible=offcanvas]:peer-data-[side=right]:mr-2",
         className
       )}
+      style={style} // Pass through style prop
       {...props}
     />
   )
 })
 SidebarInset.displayName = "SidebarInset"
+
 
 const SidebarInput = React.forwardRef<
   React.ElementRef<typeof Input>,

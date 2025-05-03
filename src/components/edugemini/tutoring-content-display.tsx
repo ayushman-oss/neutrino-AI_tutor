@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, TestTubeDiagonal, Key, Sigma, Image as ImageIcon } from 'lucide-react'; // Added Key, Sigma, and Image icons
+import { BookOpen, TestTubeDiagonal, Key, Sigma, ImageIcon } from 'lucide-react'; // Added Key, Sigma, and Image icons
 import type { GenerateSubtopicDetailsOutput } from '@/ai/flows/generate-subtopic-details'; // Import the correct type
 import { FormattedText } from '@/components/edugemini/formatted-text'; // Import shared component
 import Image from 'next/image'; // Import Next Image
@@ -35,17 +35,18 @@ export function TutoringContentDisplay({ content, selectedSubtopic, urgency, top
     // Handle potential error messages in content fields
     const isError = (text?: string | string[]) => typeof text === 'string' && text.startsWith('Error:');
 
-    // Keywords for image search hint
+    // More specific keywords for image search hint - combining topic and subtopic
     const imageKeywords = `${topic} ${selectedSubtopic}`;
+    // Encode keywords for URL usage in picsum.photos seed
+    const encodedKeywords = encodeURIComponent(imageKeywords);
 
     return (
     <div className="space-y-6">
         <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4">
             {selectedSubtopic}
-            {/* Removed urgency text from title: ({urgencyTextMap[urgency]}) */}
         </h2>
 
-         {/* Image Placeholder */}
+         {/* Image Placeholder using Picsum with keywords */}
          <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary text-lg">
@@ -53,23 +54,24 @@ export function TutoringContentDisplay({ content, selectedSubtopic, urgency, top
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="aspect-video bg-muted rounded-md flex items-center justify-center overflow-hidden">
-                    {/* Placeholder image using picsum.photos */}
+                <div className="aspect-video bg-muted rounded-md flex items-center justify-center overflow-hidden border">
+                    {/* Placeholder image using picsum.photos seeded with keywords */}
                     <Image
-                        src={`https://picsum.photos/seed/${encodeURIComponent(imageKeywords)}/600/400`}
-                        alt={`Placeholder image related to ${selectedSubtopic}`}
+                        // Use encoded keywords in the seed for better variation
+                        src={`https://picsum.photos/seed/${encodedKeywords}/600/400`}
+                        alt={`Placeholder visual for ${selectedSubtopic} in ${topic}`}
                         width={600}
                         height={400}
                         className="object-cover w-full h-full"
-                        data-ai-hint={imageKeywords} // Add hint for AI image generation/search
-                        unoptimized // Use unoptimized for picsum for simplicity, optimize later if needed
+                        // Provide clear keywords for potential future image replacement
+                        data-ai-hint={imageKeywords}
+                        // Consider adding unoptimized if Picsum rate limits are hit, but it's generally better to optimize
+                        // unoptimized
+                        priority // Prioritize loading the image placeholder
                     />
-                    {/* If you want text instead:
-                    <span className="text-muted-foreground italic">Image related to {selectedSubtopic}</span>
-                    */}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                    Note: This is a placeholder image. Relevant diagrams or visuals would appear here. Search hint: "{imageKeywords}"
+                    Note: This is a placeholder image. A relevant diagram, graph, or visual for "{selectedSubtopic}" would ideally be displayed here. (Search hint: "{imageKeywords}")
                 </p>
             </CardContent>
          </Card>
@@ -78,7 +80,7 @@ export function TutoringContentDisplay({ content, selectedSubtopic, urgency, top
         {explanation && (
             <Card className={isError(explanation) ? 'border-destructive' : ''}>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary text-lg"> {/* Adjusted size */}
+                <CardTitle className="flex items-center gap-2 text-primary text-lg">
                     <BookOpen /> Explanation
                 </CardTitle>
             </CardHeader>
@@ -91,7 +93,7 @@ export function TutoringContentDisplay({ content, selectedSubtopic, urgency, top
         {keyPoints && keyPoints.length > 0 && !isError(keyPoints) && (
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-primary text-lg"> {/* Adjusted size */}
+                    <CardTitle className="flex items-center gap-2 text-primary text-lg">
                         <Key /> Key Points
                     </CardTitle>
                 </CardHeader>
@@ -105,7 +107,7 @@ export function TutoringContentDisplay({ content, selectedSubtopic, urgency, top
          {isError(keyPoints) && (
             <Card className="border-destructive">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-destructive text-lg"> {/* Adjusted size */}
+                    <CardTitle className="flex items-center gap-2 text-destructive text-lg">
                         <Key /> Key Points Error
                     </CardTitle>
                 </CardHeader>
@@ -119,7 +121,7 @@ export function TutoringContentDisplay({ content, selectedSubtopic, urgency, top
         {example && (
             <Card className={isError(example) ? 'border-destructive' : ''}>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary text-lg"> {/* Adjusted size */}
+                <CardTitle className="flex items-center gap-2 text-primary text-lg">
                     <TestTubeDiagonal /> Example
                 </CardTitle>
             </CardHeader>
@@ -132,20 +134,15 @@ export function TutoringContentDisplay({ content, selectedSubtopic, urgency, top
          {formula && (
             <Card className={isError(formula) ? 'border-destructive' : ''}>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary text-lg"> {/* Adjusted size */}
+                <CardTitle className="flex items-center gap-2 text-primary text-lg">
                     <Sigma /> Formula / Equations
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                {/* Formulas might need special formatting (e.g., MathJax, KaTeX) or just pre-formatted text */}
-                 {/* Using FormattedText allows basic code/pre formatting if Gemini outputs it */}
                  <FormattedText text={formula} />
-                {/* <pre className="whitespace-pre-wrap font-mono text-sm bg-muted p-3 rounded-md"><code>{formula}</code></pre> */}
             </CardContent>
             </Card>
          )}
     </div>
     );
 }
-
-    

@@ -273,8 +273,8 @@ export default function Home() {
   if (initialLoad) {
     return (
       <div className="h-dvh bg-secondary flex flex-col items-center justify-center p-4 md:p-8">
-        <Skeleton className="h-16 w-full max-w-4xl lg:max-w-6xl mb-4" />
-        <Skeleton className="h-64 w-full max-w-4xl lg:max-w-6xl" />
+        <Skeleton className="h-16 w-full mb-4" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
@@ -282,7 +282,7 @@ export default function Home() {
   const renderMainContent = () => {
      if (isGeneratingContent) {
           return (
-              <div className="bg-card p-6 rounded-lg shadow space-y-4 w-full max-w-4xl lg:max-w-none mx-auto mt-8"> {/* Adjusted max-width */}
+              <div className="bg-card p-6 rounded-lg shadow space-y-4 w-full mx-auto mt-8"> {/* Ensure full width */}
                   <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
                   <Skeleton className="h-8 w-1/2 mx-auto" />
                   <Skeleton className="h-4 w-3/4" />
@@ -309,9 +309,9 @@ export default function Home() {
       // Main content area when tutoringContent exists
       return (
          // Scrollable content area
-         <div className="flex-1 overflow-y-auto p-4 md:p-6">
-             {/* Adjust container width */}
-             <div className="w-full max-w-4xl lg:max-w-none mx-auto"> {/* Adjusted max-width */}
+         <div className="flex-1 overflow-y-auto p-4 md:p-6 w-full"> {/* Ensure full width */}
+             {/* Ensure container takes full width */}
+             <div className="w-full mx-auto"> {/* Ensure full width */}
                  {viewMode === 'outline' && (
                      <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6">
                          <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
@@ -407,12 +407,7 @@ export default function Home() {
                         )}
                      </div>
                  )}
-                 {(viewMode === 'outline' || viewMode === 'subtopic' || viewMode === 'qna') && (
-                   <p className="text-muted-foreground mt-4 text-sm text-center">
-                       {viewMode !== 'outline' && "Select 'Outline / Overview', "}
-                       Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.
-                   </p>
-                  )}
+                 {/* Removed the guiding text */}
             </div>
          </div>
       );
@@ -421,9 +416,9 @@ export default function Home() {
 
   return (
      <SidebarProvider defaultOpen={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-         {/* Use h-dvh (dynamic viewport height) instead of min-h-screen */}
-         <div className="h-dvh bg-secondary flex flex-col">
-            {/* Header remains fixed at the top */}
+         {/* Use h-dvh (dynamic viewport height) */}
+         <div className="h-dvh bg-secondary flex flex-col w-screen"> {/* Ensure full width */}
+            {/* Header remains fixed */}
             <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
                 <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
                     {/* Show sidebar trigger only when content exists */}
@@ -446,20 +441,20 @@ export default function Home() {
                 )}
             </header>
 
-            {/* Main Content Area (flex-1 to take remaining space, ensure height fill) */}
-            <div className="flex flex-1 overflow-hidden h-full"> {/* Ensure this flex container fills height */}
-                {/* Sidebar is only rendered if content exists */}
+            {/* Main Content Area */}
+            <div className="flex flex-1 overflow-hidden h-full w-full"> {/* Ensure full width */}
+                {/* Sidebar */}
                 {tutoringContent && (
                 <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r border-border">
                     <SidebarContent className="p-0">
                     <SubtopicSidebar
                         topic={topic}
                         subtopics={tutoringContent.subtopics}
-                        qnaHistory={qnaHistory} // Pass Q&A history
+                        qnaHistory={qnaHistory}
                         selectedSubtopic={selectedSubtopic}
-                        selectedQnAIndex={selectedQnAIndex} // Pass selected Q&A index
+                        selectedQnAIndex={selectedQnAIndex}
                         onSubtopicSelect={handleSubtopicSelect}
-                        onQnASelect={handleQnASelect} // Pass Q&A selection handler
+                        onQnASelect={handleQnASelect}
                         currentView={viewMode}
                     />
                     </SidebarContent>
@@ -467,20 +462,20 @@ export default function Home() {
                 )}
 
                 {/* Content and Chat area */}
-                <SidebarInset className="flex flex-col flex-1 overflow-hidden">
-                    {/* Render the main content (outline, subtopic, or Q&A) */}
+                <SidebarInset className="flex flex-col flex-1 overflow-hidden w-full"> {/* Ensure full width */}
+                    {/* Render the main content */}
                     {renderMainContent()}
 
-                    {/* Fixed Chat Input Area at the bottom (only if content exists) */}
+                    {/* Fixed Chat Input Area */}
                     {tutoringContent && (
                         <div className="flex-shrink-0 p-4 md:p-6 border-t bg-background">
                             <ChatInterface
-                                messages={[]} // Pass empty array to hide history
+                                messages={[]}
                                 onSendMessage={handleSendMessage}
                                 isLoading={isAnsweringQuestion}
                                 disabled={!tutoringContent || isGeneratingContent}
-                                showHistory={false} // Prop to hide history display
-                                className="border rounded-lg shadow-sm w-full max-w-4xl lg:max-w-none mx-auto" // Center chat input, increased max-width
+                                showHistory={false}
+                                className="border rounded-lg shadow-sm w-full mx-auto" // Ensure full width
                             />
                         </div>
                     )}

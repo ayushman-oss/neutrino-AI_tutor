@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -294,7 +293,7 @@ export default function Home() {
   const renderMainContent = () => {
      if (isGeneratingContent) {
           return (
-              <div className="bg-card p-6 rounded-lg shadow space-y-4">
+              <div className="bg-card p-6 rounded-lg shadow space-y-4 max-w-4xl mx-auto mt-8">
                   <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
                   <Skeleton className="h-8 w-1/2 mx-auto" />
                   <Skeleton className="h-4 w-3/4" />
@@ -309,193 +308,191 @@ export default function Home() {
       // Show form only if no content has been generated yet
       if (!tutoringContent) {
            return (
-               <div className="bg-card p-6 rounded-lg shadow max-w-2xl mx-auto mt-8">
-                  <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
+               // Centered form container
+               <div className="flex-1 flex items-center justify-center p-4 md:p-6">
+                   <div className="bg-card p-6 rounded-lg shadow max-w-2xl w-full">
+                      <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
+                   </div>
                </div>
            );
       }
 
-      switch (viewMode) {
-        case 'outline':
-          return (
-            <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6">
-              <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
-                  <ListTree /> {topic} - Outline & Overview
-              </h2>
-              <div>
-                  <p className="font-semibold mb-2 text-lg">Outline:</p>
-                  <FormattedText text={tutoringContent.outline} />
-              </div>
-              <hr className="my-4 border-border" />
-              {tutoringContent.explanation && (
-                  <div>
-                    <p className="font-semibold mb-2 text-lg">Initial Explanation:</p>
-                    <FormattedText text={tutoringContent.explanation} />
+      // Main content area when tutoringContent exists
+      return (
+         // Scrollable content area
+         <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              {viewMode === 'outline' && (
+                 <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6 max-w-4xl mx-auto">
+                     <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
+                         <ListTree /> {topic} - Outline & Overview
+                     </h2>
+                     <div>
+                         <p className="font-semibold mb-2 text-lg">Outline:</p>
+                         <FormattedText text={tutoringContent.outline} />
+                     </div>
+                     <hr className="my-4 border-border" />
+                     {tutoringContent.explanation && (
+                         <div>
+                           <p className="font-semibold mb-2 text-lg">Initial Explanation:</p>
+                           <FormattedText text={tutoringContent.explanation} />
+                         </div>
+                     )}
+                     {tutoringContent.example && (
+                         <div>
+                             <p className="font-semibold mb-2 text-lg">Initial Example:</p>
+                             <FormattedText text={tutoringContent.example} />
+                         </div>
+                     )}
+                     {tutoringContent.problem && (
+                         <div>
+                             <p className="font-semibold mb-2 text-lg">Initial Problem:</p>
+                             <FormattedText text={tutoringContent.problem} />
+                         </div>
+                     )}
+                 </div>
+              )}
+
+              {viewMode === 'subtopic' && (
+                  <div className="max-w-4xl mx-auto">
+                      {isGeneratingSubtopic ? (
+                         <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
+                             <p className="text-lg font-semibold text-primary">Loading details for "{selectedSubtopic}"...</p>
+                             <Skeleton className="h-6 w-1/3" />
+                             <Skeleton className="h-4 w-full" />
+                             <Skeleton className="h-4 w-5/6" />
+                             <Skeleton className="h-10 w-full" />
+                             <Skeleton className="h-8 w-full" />
+                          </div>
+                      ) : subtopicDetails && selectedSubtopic ? (
+                         <div className="bg-card p-4 md:p-6 rounded-lg shadow">
+                             <TutoringContentDisplay
+                                 content={subtopicDetails}
+                                 selectedSubtopic={selectedSubtopic}
+                                 urgency={urgency as 'high' | 'medium' | 'low'}
+                                 topic={topic} // Pass topic for image search hint
+                             />
+                         </div>
+                      ) : (
+                         <div className="bg-card p-4 md:p-6 rounded-lg shadow">
+                             <p>Loading details or select a subtopic...</p>
+                         </div>
+                      )}
                   </div>
               )}
-              {tutoringContent.example && (
-                  <div>
-                      <p className="font-semibold mb-2 text-lg">Initial Example:</p>
-                      <FormattedText text={tutoringContent.example} />
+
+              {viewMode === 'qna' && (
+                  <div className="max-w-4xl mx-auto">
+                     {isAnsweringQuestion && selectedQnAIndex === qnaHistory.length - 1 ? (
+                         <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
+                              <p className="text-lg font-semibold text-primary">Getting answer for Q&amp;A #{selectedQnAIndex + 1}...</p>
+                              <Skeleton className="h-6 w-1/4" />
+                              <Skeleton className="h-4 w-full" />
+                              <Skeleton className="h-4 w-5/6" />
+                              <Skeleton className="h-10 w-full" />
+                         </div>
+                     ) : selectedQnAIndex !== null && qnaHistory[selectedQnAIndex] ? (
+                         <Card className="bg-card p-4 md:p-6 rounded-lg shadow">
+                              <CardHeader className="pb-4">
+                                  <CardTitle className="text-xl font-semibold text-primary flex items-center gap-2">
+                                     <HelpCircle /> Q&amp;A #{selectedQnAIndex + 1}
+                                  </CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                  <div>
+                                     <p className="font-semibold text-lg mb-2">Question:</p>
+                                     <p className="ml-4 italic">{qnaHistory[selectedQnAIndex].question}</p>
+                                  </div>
+                                  <hr className="border-border"/>
+                                  <div>
+                                     <p className="font-semibold text-lg mb-2">Answer:</p>
+                                     <FormattedText text={qnaHistory[selectedQnAIndex].answer} />
+                                  </div>
+                              </CardContent>
+                         </Card>
+                     ) : (
+                         <div className="bg-card p-4 md:p-6 rounded-lg shadow">
+                             <p>Select a Q&amp;A from the sidebar or ask a question using the input box below.</p>
+                         </div>
+                     )}
                   </div>
               )}
-              {tutoringContent.problem && (
-                  <div>
-                      <p className="font-semibold mb-2 text-lg">Initial Problem:</p>
-                      <FormattedText text={tutoringContent.problem} />
-                  </div>
-              )}
-              <p className="text-muted-foreground mt-4 text-sm">Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.</p>
-            </div>
-          );
-
-        case 'subtopic':
-          if (isGeneratingSubtopic) {
-            return (
-              <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
-                 <p className="text-lg font-semibold text-primary">Loading details for "{selectedSubtopic}"...</p>
-                 <Skeleton className="h-6 w-1/3" />
-                 <Skeleton className="h-4 w-full" />
-                 <Skeleton className="h-4 w-5/6" />
-                 <Skeleton className="h-10 w-full" />
-                 <Skeleton className="h-8 w-full" />
-              </div>
-            );
-          }
-          if (subtopicDetails && selectedSubtopic) {
-            return (
-              <div className="bg-card p-4 md:p-6 rounded-lg shadow">
-                <TutoringContentDisplay
-                    content={subtopicDetails}
-                    selectedSubtopic={selectedSubtopic}
-                    urgency={urgency as 'high' | 'medium' | 'low'}
-                    topic={topic} // Pass topic for image search hint
-                />
-              </div>
-            );
-          }
-          return (
-             <div className="bg-card p-4 md:p-6 rounded-lg shadow">
-                 <p>Loading details or select a subtopic...</p>
-             </div>
-           );
-
-        case 'qna':
-           if (isAnsweringQuestion && selectedQnAIndex === qnaHistory.length - 1) { // Show loading only for the *newest* QnA being generated
-             return (
-               <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
-                  <p className="text-lg font-semibold text-primary">Getting answer for Q&amp;A #{selectedQnAIndex + 1}...</p>
-                  <Skeleton className="h-6 w-1/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                  <Skeleton className="h-10 w-full" />
-               </div>
-             );
-           }
-          const currentQnA = selectedQnAIndex !== null ? qnaHistory[selectedQnAIndex] : null;
-          if (currentQnA && selectedQnAIndex !== null) {
-            return (
-              <Card className="bg-card p-4 md:p-6 rounded-lg shadow">
-                  <CardHeader className="pb-4">
-                      <CardTitle className="text-xl font-semibold text-primary flex items-center gap-2">
-                         <HelpCircle /> Q&amp;A #{selectedQnAIndex + 1}
-                      </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                      <div>
-                         <p className="font-semibold text-lg mb-2">Question:</p>
-                         <p className="ml-4 italic">{currentQnA.question}</p>
-                      </div>
-                      <hr className="border-border"/>
-                      <div>
-                         <p className="font-semibold text-lg mb-2">Answer:</p>
-                         <FormattedText text={currentQnA.answer} />
-                      </div>
-                  </CardContent>
-              </Card>
-            );
-          }
-           return (
-              <div className="bg-card p-4 md:p-6 rounded-lg shadow">
-                  <p>Select a Q&amp;A from the sidebar or ask a question using the input box below.</p>
-              </div>
-           );
-
-        default:
-          return null; // Should not happen
-      }
+              {(viewMode === 'outline' || viewMode === 'subtopic' || viewMode === 'qna') && (
+                <p className="text-muted-foreground mt-4 text-sm text-center max-w-4xl mx-auto">
+                    {viewMode !== 'outline' && "Select 'Outline / Overview', "}
+                    Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.
+                </p>
+               )}
+         </div>
+      );
   };
+
 
   return (
      <SidebarProvider defaultOpen={true} onOpenChange={setIsSidebarOpen}>
-         <div className="min-h-screen bg-secondary">
-            {/* Sidebar is only rendered if content exists */}
-            {tutoringContent && (
-            <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r border-border">
-                <SidebarContent className="p-0">
-                  <SubtopicSidebar
-                    topic={topic}
-                    subtopics={tutoringContent.subtopics}
-                    qnaHistory={qnaHistory} // Pass Q&A history
-                    selectedSubtopic={selectedSubtopic}
-                    selectedQnAIndex={selectedQnAIndex} // Pass selected Q&A index
-                    onSubtopicSelect={handleSubtopicSelect}
-                    onQnASelect={handleQnASelect} // Pass Q&A selection handler
-                    currentView={viewMode}
-                  />
-                </SidebarContent>
-            </Sidebar>
-            )}
+         <div className="min-h-screen bg-secondary flex flex-col"> {/* Ensure vertical layout */}
+            {/* Header remains fixed at the top */}
+            <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
+                <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
+                    {/* Show sidebar trigger only when content exists */}
+                    {tutoringContent && (
+                        <SidebarTrigger className="md:hidden text-primary-foreground hover:bg-primary/80 flex-shrink-0" />
+                    )}
+                    <BrainCircuit size={24} className="flex-shrink-0 md:hidden" />
+                    <BrainCircuit size={28} className="flex-shrink-0 hidden md:block" />
+                    <h1 className="text-lg md:text-2xl font-bold truncate">EduGemini</h1>
+                    {/* Display topic only if available */}
+                    {topic && <span className="text-sm md:text-base opacity-80 hidden sm:inline">| {topic}</span>}
+                </div>
+                {/* Show export button only when content exists */}
+                {tutoringContent && (
+                <Button variant="secondary" size="sm" onClick={handleExportContent} className="flex-shrink-0">
+                    <Download className="mr-1 md:mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Export Session</span>
+                    <span className="sm:hidden">Export</span>
+                </Button>
+                )}
+            </header>
 
-            {/* Main content area */}
-            <SidebarInset>
-                <div className="flex flex-col h-screen">
-                    <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
-                        <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
-                         {/* Show sidebar trigger only when content exists */}
-                         {tutoringContent && (
-                             <SidebarTrigger className="md:hidden text-primary-foreground hover:bg-primary/80 flex-shrink-0" />
-                         )}
-                         <BrainCircuit size={24} className="flex-shrink-0 md:hidden" />
-                         <BrainCircuit size={28} className="flex-shrink-0 hidden md:block" />
-                         <h1 className="text-lg md:text-2xl font-bold truncate">EduGemini</h1>
-                         {/* Display topic only if available */}
-                         {topic && <span className="text-sm md:text-base opacity-80 hidden sm:inline">| {topic}</span>}
+            {/* Main Content Area (flex-1 to take remaining space) */}
+            <div className="flex flex-1 overflow-hidden"> {/* Allow content to scroll */}
+                {/* Sidebar is only rendered if content exists */}
+                {tutoringContent && (
+                <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r border-border">
+                    <SidebarContent className="p-0">
+                    <SubtopicSidebar
+                        topic={topic}
+                        subtopics={tutoringContent.subtopics}
+                        qnaHistory={qnaHistory} // Pass Q&A history
+                        selectedSubtopic={selectedSubtopic}
+                        selectedQnAIndex={selectedQnAIndex} // Pass selected Q&A index
+                        onSubtopicSelect={handleSubtopicSelect}
+                        onQnASelect={handleQnASelect} // Pass Q&A selection handler
+                        currentView={viewMode}
+                    />
+                    </SidebarContent>
+                </Sidebar>
+                )}
+
+                {/* Content and Chat area */}
+                <SidebarInset className="flex flex-col flex-1 overflow-hidden">
+                    {/* Render the main content (outline, subtopic, or Q&A) */}
+                    {renderMainContent()}
+
+                    {/* Fixed Chat Input Area at the bottom (only if content exists) */}
+                    {tutoringContent && (
+                        <div className="flex-shrink-0 p-4 md:p-6 border-t bg-background">
+                            <ChatInterface
+                                messages={[]} // Pass empty array to hide history
+                                onSendMessage={handleSendMessage}
+                                isLoading={isAnsweringQuestion}
+                                disabled={!tutoringContent || isGeneratingContent}
+                                showHistory={false} // Prop to hide history display
+                                className="border rounded-lg shadow-sm max-w-4xl mx-auto" // Center chat input
+                            />
                         </div>
-                        {/* Show export button only when content exists */}
-                        {tutoringContent && (
-                        <Button variant="secondary" size="sm" onClick={handleExportContent} className="flex-shrink-0">
-                            <Download className="mr-1 md:mr-2 h-4 w-4" />
-                            <span className="hidden sm:inline">Export Session</span>
-                            <span className="sm:hidden">Export</span>
-                        </Button>
-                        )}
-                    </header>
-
-                     {/* Adjusted layout: Main content flows vertically, chat input at the bottom */}
-                     <main className="flex-1 flex flex-col overflow-hidden p-4 md:p-6">
-                        {/* Scrollable content area */}
-                        <div className="flex-1 overflow-y-auto mb-4"> {/* Removed space-y-6 */}
-                            {renderMainContent()}
-                        </div>
-
-                        {/* Fixed Chat Input Area at the bottom */}
-                        {tutoringContent && (
-                            <div className="flex-shrink-0 mt-auto">
-                                <ChatInterface
-                                    messages={[]} // Pass empty array to hide history
-                                    onSendMessage={handleSendMessage}
-                                    isLoading={isAnsweringQuestion}
-                                    disabled={!tutoringContent || isGeneratingContent}
-                                    showHistory={false} // Prop to hide history display
-                                    className="border rounded-lg shadow-sm" // Ensure styling is applied
-                                />
-                            </div>
-                        )}
-
-                     </main>
-                 </div>
-             </SidebarInset>
+                    )}
+                </SidebarInset>
+             </div>
          </div>
       </SidebarProvider>
    );

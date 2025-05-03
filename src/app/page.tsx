@@ -282,7 +282,7 @@ export default function Home() {
   const renderMainContent = () => {
      if (isGeneratingContent) {
           return (
-              <div className="bg-card p-6 rounded-lg shadow space-y-4 max-w-4xl lg:max-w-6xl mx-auto mt-8">
+              <div className="bg-card p-6 rounded-lg shadow space-y-4 w-full max-w-4xl lg:max-w-none mx-auto mt-8"> {/* Adjusted max-width */}
                   <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
                   <Skeleton className="h-8 w-1/2 mx-auto" />
                   <Skeleton className="h-4 w-3/4" />
@@ -310,107 +310,110 @@ export default function Home() {
       return (
          // Scrollable content area
          <div className="flex-1 overflow-y-auto p-4 md:p-6">
-              {viewMode === 'outline' && (
-                 <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6 max-w-4xl lg:max-w-6xl mx-auto">
-                     <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
-                         <ListTree /> {topic} - Outline & Overview
-                     </h2>
-                     <div>
-                         <p className="font-semibold mb-2 text-lg">Outline:</p>
-                         <FormattedText text={tutoringContent.outline} />
+             {/* Adjust container width */}
+             <div className="w-full max-w-4xl lg:max-w-none mx-auto"> {/* Adjusted max-width */}
+                 {viewMode === 'outline' && (
+                     <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6">
+                         <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
+                             <ListTree /> {topic} - Outline & Overview
+                         </h2>
+                         <div>
+                             <p className="font-semibold mb-2 text-lg">Outline:</p>
+                             <FormattedText text={tutoringContent.outline} />
+                         </div>
+                         <hr className="my-4 border-border" />
+                         {tutoringContent.explanation && (
+                             <div>
+                               <p className="font-semibold mb-2 text-lg">Initial Explanation:</p>
+                               <FormattedText text={tutoringContent.explanation} />
+                             </div>
+                         )}
+                         {tutoringContent.example && (
+                             <div>
+                                 <p className="font-semibold mb-2 text-lg">Initial Example:</p>
+                                 <FormattedText text={tutoringContent.example} />
+                             </div>
+                         )}
+                         {tutoringContent.problem && (
+                             <div>
+                                 <p className="font-semibold mb-2 text-lg">Initial Problem:</p>
+                                 <FormattedText text={tutoringContent.problem} />
+                             </div>
+                         )}
                      </div>
-                     <hr className="my-4 border-border" />
-                     {tutoringContent.explanation && (
-                         <div>
-                           <p className="font-semibold mb-2 text-lg">Initial Explanation:</p>
-                           <FormattedText text={tutoringContent.explanation} />
-                         </div>
-                     )}
-                     {tutoringContent.example && (
-                         <div>
-                             <p className="font-semibold mb-2 text-lg">Initial Example:</p>
-                             <FormattedText text={tutoringContent.example} />
-                         </div>
-                     )}
-                     {tutoringContent.problem && (
-                         <div>
-                             <p className="font-semibold mb-2 text-lg">Initial Problem:</p>
-                             <FormattedText text={tutoringContent.problem} />
-                         </div>
-                     )}
-                 </div>
-              )}
+                 )}
 
-              {viewMode === 'subtopic' && (
-                  <div className="max-w-4xl lg:max-w-6xl mx-auto">
-                      {isGeneratingSubtopic ? (
-                         <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
-                             <p className="text-lg font-semibold text-primary">Loading details for "{selectedSubtopic}"...</p>
-                             <Skeleton className="h-6 w-1/3" />
-                             <Skeleton className="h-4 w-full" />
-                             <Skeleton className="h-4 w-5/6" />
-                             <Skeleton className="h-10 w-full" />
-                             <Skeleton className="h-8 w-full" />
-                          </div>
-                      ) : subtopicDetails && selectedSubtopic ? (
-                         <div className="bg-card p-4 md:p-6 rounded-lg shadow">
-                             <TutoringContentDisplay
-                                 content={subtopicDetails}
-                                 selectedSubtopic={selectedSubtopic}
-                                 urgency={urgency as 'high' | 'medium' | 'low'}
-                                 topic={topic} // Pass topic for image search hint
-                             />
-                         </div>
-                      ) : (
-                         <div className="bg-card p-4 md:p-6 rounded-lg shadow">
-                             <p>Loading details or select a subtopic...</p>
-                         </div>
-                      )}
-                  </div>
-              )}
+                 {viewMode === 'subtopic' && (
+                     <div>
+                         {isGeneratingSubtopic ? (
+                            <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
+                                <p className="text-lg font-semibold text-primary">Loading details for "{selectedSubtopic}"...</p>
+                                <Skeleton className="h-6 w-1/3" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-5/6" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-8 w-full" />
+                             </div>
+                         ) : subtopicDetails && selectedSubtopic ? (
+                            <div className="bg-card p-4 md:p-6 rounded-lg shadow">
+                                <TutoringContentDisplay
+                                    content={subtopicDetails}
+                                    selectedSubtopic={selectedSubtopic}
+                                    urgency={urgency as 'high' | 'medium' | 'low'}
+                                    topic={topic} // Pass topic for image search hint
+                                />
+                            </div>
+                         ) : (
+                            <div className="bg-card p-4 md:p-6 rounded-lg shadow">
+                                <p>Loading details or select a subtopic...</p>
+                            </div>
+                         )}
+                     </div>
+                 )}
 
-              {viewMode === 'qna' && (
-                  <div className="max-w-4xl lg:max-w-6xl mx-auto">
-                     {isAnsweringQuestion && selectedQnAIndex === qnaHistory.length - 1 ? (
-                         <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
-                              <p className="text-lg font-semibold text-primary">Getting answer for Q&amp;A #{selectedQnAIndex + 1}...</p>
-                              <Skeleton className="h-6 w-1/4" />
-                              <Skeleton className="h-4 w-full" />
-                              <Skeleton className="h-4 w-5/6" />
-                              <Skeleton className="h-10 w-full" />
-                         </div>
-                     ) : selectedQnAIndex !== null && qnaHistory[selectedQnAIndex] ? (
-                         <Card className="bg-card p-4 md:p-6 rounded-lg shadow">
-                              <CardHeader className="pb-4">
-                                  <CardTitle className="text-xl font-semibold text-primary flex items-center gap-2">
-                                     <HelpCircle /> Q&amp;A #{selectedQnAIndex + 1}
-                                  </CardTitle>
-                              </CardHeader>
-                              <CardContent className="space-y-4">
-                                  <div>
-                                     <p className="font-semibold text-lg mb-2">Question:</p>
-                                     <p className="ml-4 italic">{qnaHistory[selectedQnAIndex].question}</p>
-                                  </div>
-                                  <hr className="border-border"/>
-                                  <div>
-                                     <p className="font-semibold text-lg mb-2">Answer:</p>
-                                     <FormattedText text={qnaHistory[selectedQnAIndex].answer} />
-                                  </div>
-                              </CardContent>
-                         </Card>
-                     ) : (
-                         <div className="bg-card p-4 md:p-6 rounded-lg shadow">
-                             <p>Select a Q&amp;A from the sidebar or ask a question using the input box below.</p>
-                         </div>
-                     )}
-                  </div>
-              )}
-              {(viewMode === 'outline' || viewMode === 'subtopic' || viewMode === 'qna') && (
-                <p className="text-muted-foreground mt-4 text-sm text-center max-w-4xl lg:max-w-6xl mx-auto">
-                    {viewMode !== 'outline' && "Select 'Outline / Overview', "}
-                    Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.
-                </p>
-               )}
+                 {viewMode === 'qna' && (
+                     <div>
+                        {isAnsweringQuestion && selectedQnAIndex === qnaHistory.length - 1 ? (
+                            <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
+                                 <p className="text-lg font-semibold text-primary">Getting answer for Q&amp;A #{selectedQnAIndex + 1}...</p>
+                                 <Skeleton className="h-6 w-1/4" />
+                                 <Skeleton className="h-4 w-full" />
+                                 <Skeleton className="h-4 w-5/6" />
+                                 <Skeleton className="h-10 w-full" />
+                            </div>
+                        ) : selectedQnAIndex !== null && qnaHistory[selectedQnAIndex] ? (
+                            <Card className="bg-card p-4 md:p-6 rounded-lg shadow">
+                                 <CardHeader className="pb-4">
+                                     <CardTitle className="text-xl font-semibold text-primary flex items-center gap-2">
+                                        <HelpCircle /> Q&amp;A #{selectedQnAIndex + 1}
+                                     </CardTitle>
+                                 </CardHeader>
+                                 <CardContent className="space-y-4">
+                                     <div>
+                                        <p className="font-semibold text-lg mb-2">Question:</p>
+                                        <p className="ml-4 italic">{qnaHistory[selectedQnAIndex].question}</p>
+                                     </div>
+                                     <hr className="border-border"/>
+                                     <div>
+                                        <p className="font-semibold text-lg mb-2">Answer:</p>
+                                        <FormattedText text={qnaHistory[selectedQnAIndex].answer} />
+                                     </div>
+                                 </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="bg-card p-4 md:p-6 rounded-lg shadow">
+                                <p>Select a Q&amp;A from the sidebar or ask a question using the input box below.</p>
+                            </div>
+                        )}
+                     </div>
+                 )}
+                 {(viewMode === 'outline' || viewMode === 'subtopic' || viewMode === 'qna') && (
+                   <p className="text-muted-foreground mt-4 text-sm text-center">
+                       {viewMode !== 'outline' && "Select 'Outline / Overview', "}
+                       Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.
+                   </p>
+                  )}
+            </div>
          </div>
       );
   };
@@ -477,7 +480,7 @@ export default function Home() {
                                 isLoading={isAnsweringQuestion}
                                 disabled={!tutoringContent || isGeneratingContent}
                                 showHistory={false} // Prop to hide history display
-                                className="border rounded-lg shadow-sm max-w-4xl lg:max-w-6xl mx-auto" // Center chat input, increased max-width
+                                className="border rounded-lg shadow-sm w-full max-w-4xl lg:max-w-none mx-auto" // Center chat input, increased max-width
                             />
                         </div>
                     )}
@@ -487,5 +490,3 @@ export default function Home() {
       </SidebarProvider>
    );
  }
-
-    

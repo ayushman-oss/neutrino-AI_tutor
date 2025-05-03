@@ -245,6 +245,7 @@ const Sidebar = React.forwardRef<
                ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
                : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
              "group-data-[state=expanded]:w-[--sidebar-width]", // Explicit width for expanded state
+             variant === "sidebar" && "group-data-[side=left]:border-r group-data-[side=right]:border-l", // Ensure border for default sidebar
             className
           )}
           {...props}
@@ -327,7 +328,7 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background transition-[margin] duration-200 ease-linear",
-        // Standard Sidebar (Not Inset)
+        // Standard Sidebar (Not Inset) - Removed the gap
         "md:peer-data-[variant=sidebar]:peer-data-[state=expanded]:peer-data-[side=left]:ml-[--sidebar-width]",
         "md:peer-data-[variant=sidebar]:peer-data-[state=expanded]:peer-data-[side=right]:mr-[--sidebar-width]",
         "md:peer-data-[variant=sidebar]:peer-data-[state=collapsed]:peer-data-[collapsible=icon]:peer-data-[side=left]:ml-[--sidebar-width-icon]",

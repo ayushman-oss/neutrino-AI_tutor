@@ -272,7 +272,7 @@ export default function Home() {
 
   if (initialLoad) {
     return (
-      <div className="h-dvh bg-secondary flex flex-col items-center justify-center p-4 md:p-8">
+      <div className="h-dvh bg-secondary flex flex-col items-center justify-center p-4 md:p-8 w-screen"> {/* Ensure full width */}
         <Skeleton className="h-16 w-full mb-4" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -298,7 +298,7 @@ export default function Home() {
       if (!tutoringContent) {
            return (
                // Centered form container
-               <div className="flex-1 flex items-center justify-center p-4 md:p-6">
+               <div className="flex-1 flex items-center justify-center p-4 md:p-6 w-full"> {/* Ensure full width */}
                    <div className="bg-card p-6 rounded-lg shadow max-w-2xl w-full">
                       <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
                    </div>
@@ -407,7 +407,6 @@ export default function Home() {
                         )}
                      </div>
                  )}
-                 {/* Removed the guiding text */}
             </div>
          </div>
       );
@@ -468,7 +467,7 @@ export default function Home() {
 
                     {/* Fixed Chat Input Area */}
                     {tutoringContent && (
-                        <div className="flex-shrink-0 p-4 md:p-6 border-t bg-background">
+                        <div className="flex-shrink-0 px-4 md:px-6 py-3 border-t bg-background"> {/* Adjusted padding */}
                             <ChatInterface
                                 messages={[]}
                                 onSendMessage={handleSendMessage}

@@ -1,3 +1,9 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add prose styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -42,6 +48,24 @@ body {
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 235 62% 29%; /* Deep Blue */
+
+     /* Tailwind Typography variables (light) */
+    --tw-prose-body: hsl(var(--foreground));
+    --tw-prose-headings: hsl(var(--primary));
+    --tw-prose-lead: hsl(var(--muted-foreground));
+    --tw-prose-links: hsl(var(--accent));
+    --tw-prose-bold: hsl(var(--foreground));
+    --tw-prose-counters: hsl(var(--muted-foreground));
+    --tw-prose-bullets: hsl(var(--muted-foreground));
+    --tw-prose-hr: hsl(var(--border));
+    --tw-prose-quotes: hsl(var(--foreground));
+    --tw-prose-quote-borders: hsl(var(--border));
+    --tw-prose-captions: hsl(var(--muted-foreground));
+    --tw-prose-code: hsl(var(--primary));
+    --tw-prose-pre-code: hsl(var(--card-foreground));
+    --tw-prose-pre-bg: hsl(var(--card));
+    --tw-prose-th-borders: hsl(var(--border));
+    --tw-prose-td-borders: hsl(var(--border));
   }
   .dark {
     /* Dark Theme - Adjusted for contrast with primary/accent */
@@ -77,6 +101,41 @@ body {
     --sidebar-accent-foreground: 240 10% 3.9%; /* Dark Gray */
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 187 80% 50%; /* Brighter Teal */
+
+     /* Tailwind Typography variables (dark) */
+    --tw-prose-body: hsl(var(--foreground));
+    --tw-prose-headings: hsl(var(--primary));
+    --tw-prose-lead: hsl(var(--muted-foreground));
+    --tw-prose-links: hsl(var(--accent));
+    --tw-prose-bold: hsl(var(--foreground));
+    --tw-prose-counters: hsl(var(--muted-foreground));
+    --tw-prose-bullets: hsl(var(--muted-foreground));
+    --tw-prose-hr: hsl(var(--border));
+    --tw-prose-quotes: hsl(var(--foreground));
+    --tw-prose-quote-borders: hsl(var(--border));
+    --tw-prose-captions: hsl(var(--muted-foreground));
+    --tw-prose-code: hsl(var(--accent)); /* Brighter code */
+    --tw-prose-pre-code: hsl(var(--card-foreground));
+    --tw-prose-pre-bg: hsl(var(--muted)); /* Use muted for pre background */
+    --tw-prose-th-borders: hsl(var(--border));
+    --tw-prose-td-borders: hsl(var(--border));
+     /* Dark theme specific overrides */
+    --tw-prose-invert-body: hsl(var(--foreground));
+    --tw-prose-invert-headings: hsl(var(--primary));
+    --tw-prose-invert-lead: hsl(var(--muted-foreground));
+    --tw-prose-invert-links: hsl(var(--accent));
+    --tw-prose-invert-bold: hsl(var(--foreground));
+    --tw-prose-invert-counters: hsl(var(--muted-foreground));
+    --tw-prose-invert-bullets: hsl(var(--muted-foreground));
+    --tw-prose-invert-hr: hsl(var(--border));
+    --tw-prose-invert-quotes: hsl(var(--foreground));
+    --tw-prose-invert-quote-borders: hsl(var(--border));
+    --tw-prose-invert-captions: hsl(var(--muted-foreground));
+    --tw-prose-invert-code: hsl(var(--accent));
+    --tw-prose-invert-pre-code: hsl(var(--card-foreground));
+    --tw-prose-invert-pre-bg: hsl(var(--muted));
+    --tw-prose-invert-th-borders: hsl(var(--border));
+    --tw-prose-invert-td-borders: hsl(var(--border));
   }
 }
 
@@ -88,4 +147,53 @@ body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+   /* Ensure prose styles apply correctly */
+   .prose {
+     @apply text-foreground;
+   }
+   .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+     @apply text-primary;
+   }
+   .prose a {
+     @apply text-accent;
+   }
+   .prose blockquote {
+     @apply border-l-border text-foreground;
+   }
+   .prose code {
+       @apply text-accent font-mono text-sm bg-muted px-1 py-0.5 rounded; /* Style inline code */
+   }
+    /* Style code blocks within prose */
+   .prose pre {
+       @apply bg-muted text-card-foreground p-4 rounded-md overflow-x-auto;
+   }
+    .prose pre code {
+        @apply bg-transparent p-0 rounded-none text-card-foreground; /* Reset inline code styles for code blocks */
+    }
+
+   /* Dark mode prose overrides */
+    .dark .prose {
+     @apply text-foreground; /* Uses --tw-prose-invert-body */
+   }
+   .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 {
+     @apply text-primary; /* Uses --tw-prose-invert-headings */
+   }
+    .dark .prose a {
+     @apply text-accent; /* Uses --tw-prose-invert-links */
+   }
+    .dark .prose blockquote {
+     @apply border-l-border text-foreground; /* Uses --tw-prose-invert-quotes */
+   }
+    .dark .prose code {
+      @apply text-accent bg-secondary px-1 py-0.5 rounded; /* Uses --tw-prose-invert-code */
+    }
+    .dark .prose pre {
+       @apply bg-muted text-card-foreground; /* Uses --tw-prose-invert-pre-bg */
+    }
+    .dark .prose pre code {
+        @apply bg-transparent text-card-foreground; /* Uses --tw-prose-invert-pre-code */
+    }
 }
+
+    

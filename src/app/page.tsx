@@ -84,12 +84,8 @@ export default function Home() {
     try {
       const content = await generateTutoringContent({ topic: data.topic, urgency: data.urgency });
       setTutoringContent(content);
-      // Clear chat messages instead of adding initial ones
+      // Clear chat messages
       setChatMessages([]);
-      // Example of adding a single, concise message if desired:
-      // setChatMessages([
-      //   { id: Date.now().toString(), sender: 'system', text: `Content for **${data.topic}** generated. Use the sidebar or ask questions.` },
-      // ]);
     } catch (error: any) {
         console.error("Error generating tutoring content:", error);
         let description = "Failed to generate tutoring content. Please try again.";
@@ -110,7 +106,8 @@ export default function Home() {
             description: description,
             variant: "destructive",
         });
-        setChatMessages(prev => [...prev, { id: (Date.now() + 1).toString(), sender: 'ai', text: chatErrorMessage, timestamp: new Date() }]);
+        // Add error message to chat input area? No, chat history is hidden now.
+        // Just reset state.
         setTopic('');
         setUrgency('');
     } finally {
@@ -177,8 +174,7 @@ export default function Home() {
        if (index !== null) {
            setViewMode('qna');
        } else {
-           // If index is null, decide whether to go to outline or last subtopic
-           // For simplicity, let's default to outline view if no Q&A is selected
+           // If index is null, default to outline view
            setViewMode('outline');
        }
    };
@@ -186,10 +182,11 @@ export default function Home() {
   const handleSendMessage = async (message: string) => {
     if (!topic || !urgency || !tutoringContent) return;
 
-    const newUserMessage: Message = { id: Date.now().toString(), sender: 'user', text: message, timestamp: new Date() };
-    setChatMessages(prev => [...prev, newUserMessage]);
+    // Don't add user message to chat history UI
+    // const newUserMessage: Message = { id: Date.now().toString(), sender: 'user', text: message, timestamp: new Date() };
+    // setChatMessages(prev => [...prev, newUserMessage]);
+
     setIsAnsweringQuestion(true);
-    // Don't clear view or selection while loading
 
     try {
       const input: AnswerEngineeringQuestionInput = {
@@ -197,8 +194,7 @@ export default function Home() {
           question: message,
           urgency: urgency,
           learningProgress: learningProgress,
-          // Q&A is general, don't tie to specific subtopic context unless needed
-          // selectedSubtopic: viewMode === 'subtopic' ? selectedSubtopic : undefined,
+          // selectedSubtopic: viewMode === 'subtopic' ? selectedSubtopic : undefined, // Keep context if needed? Maybe not for general Q&A.
       };
       const response = await answerEngineeringQuestion(input);
       const newQnA = { question: message, answer: response.answer };
@@ -212,35 +208,25 @@ export default function Home() {
       setSelectedSubtopic(null); // Clear subtopic selection
       setViewMode('qna'); // Switch view to show Q&A
 
-      // Add a system message to chat indicating where the answer is - REMOVED
-      // const systemMessage: Message = { id: (Date.now() + 1).toString(), sender: 'system', text: `Answer added to the 'Q&A #${newIndex + 1}' section in the sidebar and displayed in the main content area.`, timestamp: new Date() };
-      // setChatMessages(prev => [...prev, systemMessage]);
-
     } catch (error: any) {
       console.error("Error answering question:", error);
       let description = "Failed to get an answer. Please try again.";
-      let chatErrorMessage = "Sorry, I encountered an error answering your question. Please try again.";
 
       if (error.message?.includes('503') || error.message?.includes('overloaded')) {
           description = "The AI service is overloaded. Please try asking again shortly.";
-          chatErrorMessage = "Sorry, the AI service is overloaded. Try asking again soon.";
       } else if (error.message?.includes('template error')) {
           description = "Internal error processing the request. Please try again.";
-          chatErrorMessage = "Sorry, an internal error occurred. Please try asking again.";
       } else {
           description = error.message || description;
       }
 
-      // Display error in chat
-      const errorAiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: chatErrorMessage, timestamp: new Date() };
-      setChatMessages(prev => [...prev, errorAiMessage]);
-      // Don't revert view mode, keep the user context
-
+      // Display error using toast
       toast({
         title: "Error Answering Question",
         description: description,
         variant: "destructive",
       });
+      // No chat error message needed as history is hidden
     } finally {
       setIsAnsweringQuestion(false);
     }
@@ -273,12 +259,13 @@ export default function Home() {
     });
 
 
-    contentString += `\n== Chat History (Messages) ==\n`;
-    chatMessages.forEach(msg => {
-        const prefix = msg.sender === 'user' ? 'USER' : (msg.sender === 'ai' ? 'AI' : 'SYSTEM');
-        const timestamp = msg.timestamp ? `[${msg.timestamp.toLocaleTimeString()}] ` : '';
-        contentString += `${timestamp}${prefix}: ${msg.text}\n`;
-    });
+    // Include Chat History (Messages) - Removed as chat history is hidden
+    // contentString += `\n== Chat History (Messages) ==\n`;
+    // chatMessages.forEach(msg => {
+    //     const prefix = msg.sender === 'user' ? 'USER' : (msg.sender === 'ai' ? 'AI' : 'SYSTEM');
+    //     const timestamp = msg.timestamp ? `[${msg.timestamp.toLocaleTimeString()}] ` : '';
+    //     contentString += `${timestamp}${prefix}: ${msg.text}\n`;
+    // });
 
     const blob = new Blob([contentString], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
@@ -290,7 +277,7 @@ export default function Home() {
 
     toast({
       title: "Session Exported",
-      description: "Tutoring content, subtopic details, Q&A, and chat history downloaded.",
+      description: "Tutoring content, subtopic details, and Q&A downloaded.",
     });
   };
 
@@ -308,7 +295,7 @@ export default function Home() {
      if (isGeneratingContent) {
           return (
               <div className="bg-card p-6 rounded-lg shadow space-y-4">
-                  <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}" ({urgency} urgency)...</p>
+                  <p className="text-lg font-semibold text-center text-primary">Generating learning content for "{topic}"...</p>
                   <Skeleton className="h-8 w-1/2 mx-auto" />
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
@@ -319,9 +306,10 @@ export default function Home() {
            );
       }
 
+      // Show form only if no content has been generated yet
       if (!tutoringContent) {
            return (
-               <div className="bg-card p-6 rounded-lg shadow max-w-2xl mx-auto">
+               <div className="bg-card p-6 rounded-lg shadow max-w-2xl mx-auto mt-8">
                   <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
                </div>
            );
@@ -330,7 +318,7 @@ export default function Home() {
       switch (viewMode) {
         case 'outline':
           return (
-            <div className="bg-card p-6 rounded-lg shadow space-y-6">
+            <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-6">
               <h2 className="text-xl font-semibold text-primary border-b pb-2 mb-4 flex items-center gap-2">
                   <ListTree /> {topic} - Outline & Overview
               </h2>
@@ -341,30 +329,30 @@ export default function Home() {
               <hr className="my-4 border-border" />
               {tutoringContent.explanation && (
                   <div>
-                    <p className="font-semibold mb-2 text-lg">Initial Explanation ({urgency}):</p>
+                    <p className="font-semibold mb-2 text-lg">Initial Explanation:</p>
                     <FormattedText text={tutoringContent.explanation} />
                   </div>
               )}
               {tutoringContent.example && (
                   <div>
-                      <p className="font-semibold mb-2 text-lg">Initial Example ({urgency}):</p>
+                      <p className="font-semibold mb-2 text-lg">Initial Example:</p>
                       <FormattedText text={tutoringContent.example} />
                   </div>
               )}
               {tutoringContent.problem && (
                   <div>
-                      <p className="font-semibold mb-2 text-lg">Initial Problem ({urgency}):</p>
+                      <p className="font-semibold mb-2 text-lg">Initial Problem:</p>
                       <FormattedText text={tutoringContent.problem} />
                   </div>
               )}
-              <p className="text-muted-foreground mt-4">Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.</p>
+              <p className="text-muted-foreground mt-4 text-sm">Select a subtopic or Q&amp;A from the sidebar, or ask a new question below.</p>
             </div>
           );
 
         case 'subtopic':
           if (isGeneratingSubtopic) {
             return (
-              <div className="bg-card p-6 rounded-lg shadow space-y-4">
+              <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
                  <p className="text-lg font-semibold text-primary">Loading details for "{selectedSubtopic}"...</p>
                  <Skeleton className="h-6 w-1/3" />
                  <Skeleton className="h-4 w-full" />
@@ -376,17 +364,18 @@ export default function Home() {
           }
           if (subtopicDetails && selectedSubtopic) {
             return (
-              <div className="bg-card p-6 rounded-lg shadow">
+              <div className="bg-card p-4 md:p-6 rounded-lg shadow">
                 <TutoringContentDisplay
                     content={subtopicDetails}
                     selectedSubtopic={selectedSubtopic}
                     urgency={urgency as 'high' | 'medium' | 'low'}
+                    topic={topic} // Pass topic for image search hint
                 />
               </div>
             );
           }
           return (
-             <div className="bg-card p-6 rounded-lg shadow">
+             <div className="bg-card p-4 md:p-6 rounded-lg shadow">
                  <p>Loading details or select a subtopic...</p>
              </div>
            );
@@ -394,7 +383,7 @@ export default function Home() {
         case 'qna':
            if (isAnsweringQuestion && selectedQnAIndex === qnaHistory.length - 1) { // Show loading only for the *newest* QnA being generated
              return (
-               <div className="bg-card p-6 rounded-lg shadow space-y-4">
+               <div className="bg-card p-4 md:p-6 rounded-lg shadow space-y-4">
                   <p className="text-lg font-semibold text-primary">Getting answer for Q&amp;A #{selectedQnAIndex + 1}...</p>
                   <Skeleton className="h-6 w-1/4" />
                   <Skeleton className="h-4 w-full" />
@@ -406,8 +395,8 @@ export default function Home() {
           const currentQnA = selectedQnAIndex !== null ? qnaHistory[selectedQnAIndex] : null;
           if (currentQnA && selectedQnAIndex !== null) {
             return (
-              <Card className="bg-card p-6 rounded-lg shadow">
-                  <CardHeader>
+              <Card className="bg-card p-4 md:p-6 rounded-lg shadow">
+                  <CardHeader className="pb-4">
                       <CardTitle className="text-xl font-semibold text-primary flex items-center gap-2">
                          <HelpCircle /> Q&amp;A #{selectedQnAIndex + 1}
                       </CardTitle>
@@ -427,8 +416,8 @@ export default function Home() {
             );
           }
            return (
-              <div className="bg-card p-6 rounded-lg shadow">
-                  <p>Select a Q&amp;A from the sidebar or ask a question using the chat interface below.</p>
+              <div className="bg-card p-4 md:p-6 rounded-lg shadow">
+                  <p>Select a Q&amp;A from the sidebar or ask a question using the input box below.</p>
               </div>
            );
 
@@ -440,6 +429,7 @@ export default function Home() {
   return (
      <SidebarProvider defaultOpen={true} onOpenChange={setIsSidebarOpen}>
          <div className="min-h-screen bg-secondary">
+            {/* Sidebar is only rendered if content exists */}
             {tutoringContent && (
             <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r border-border">
                 <SidebarContent className="p-0">
@@ -457,54 +447,60 @@ export default function Home() {
             </Sidebar>
             )}
 
+            {/* Main content area */}
             <SidebarInset>
                 <div className="flex flex-col h-screen">
-                    <header className="bg-primary text-primary-foreground p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
-                        <div className="flex items-center gap-3">
+                    <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
+                        <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
+                         {/* Show sidebar trigger only when content exists */}
                          {tutoringContent && (
-                             <SidebarTrigger className="md:hidden text-primary-foreground hover:bg-primary/80" />
+                             <SidebarTrigger className="md:hidden text-primary-foreground hover:bg-primary/80 flex-shrink-0" />
                          )}
-                         <BrainCircuit size={28} />
-                         <h1 className="text-xl md:text-2xl font-bold">EduGemini</h1>
-                         {topic && <span className="text-sm md:text-base opacity-80">| {topic} ({urgency})</span>}
+                         <BrainCircuit size={24} className="flex-shrink-0 md:hidden" />
+                         <BrainCircuit size={28} className="flex-shrink-0 hidden md:block" />
+                         <h1 className="text-lg md:text-2xl font-bold truncate">EduGemini</h1>
+                         {/* Display topic only if available */}
+                         {topic && <span className="text-sm md:text-base opacity-80 hidden sm:inline">| {topic}</span>}
                         </div>
+                        {/* Show export button only when content exists */}
                         {tutoringContent && (
-                        <Button variant="secondary" size="sm" onClick={handleExportContent}>
-                            <Download className="mr-2 h-4 w-4" /> Export Session
+                        <Button variant="secondary" size="sm" onClick={handleExportContent} className="flex-shrink-0">
+                            <Download className="mr-1 md:mr-2 h-4 w-4" />
+                            <span className="hidden sm:inline">Export Session</span>
+                            <span className="sm:hidden">Export</span>
                         </Button>
                         )}
                     </header>
 
-                     <main className="flex-1 overflow-hidden">
-                        {/* Adjusted grid layout */}
-                       <div className="h-full grid grid-cols-1 lg:grid-cols-10 gap-6 p-4 md:p-6">
-                         {/* Main Content Area (Takes up more space) */}
-                          <div className="lg:col-span-7 space-y-6 overflow-y-auto"> {/* Changed from lg:col-span-2 */}
-                              {renderMainContent()}
-                          </div>
+                     {/* Adjusted layout: Main content flows vertically, chat input at the bottom */}
+                     <main className="flex-1 flex flex-col overflow-hidden p-4 md:p-6">
+                        {/* Scrollable content area */}
+                        <div className="flex-1 overflow-y-auto mb-4 space-y-6">
+                            {renderMainContent()}
+                        </div>
 
-                          {/* Chat Interface Area (Takes up less space) */}
-                         {tutoringContent && (
-                              <div className="lg:col-span-3 h-full flex flex-col"> {/* Changed from lg:col-span-1 */}
-                                 <ChatInterface
-                                     messages={chatMessages}
-                                     onSendMessage={handleSendMessage}
-                                     isLoading={isAnsweringQuestion}
-                                     disabled={!tutoringContent || isGeneratingContent}
-                                     className="flex-1 min-h-0" // Ensures chat takes remaining height
-                                 />
-                              </div>
-                          )}
+                        {/* Fixed Chat Input Area at the bottom */}
+                        {tutoringContent && (
+                            <div className="flex-shrink-0 mt-auto">
+                                <ChatInterface
+                                    messages={[]} // Pass empty array to hide history
+                                    onSendMessage={handleSendMessage}
+                                    isLoading={isAnsweringQuestion}
+                                    disabled={!tutoringContent || isGeneratingContent}
+                                    showHistory={false} // Prop to hide history display
+                                    className="border rounded-lg shadow-sm" // Ensure styling is applied
+                                />
+                            </div>
+                        )}
 
-                          {/* Show form again if generation failed and no topic set */}
-                         {!tutoringContent && !isGeneratingContent && !topic && (
-                             <div className="lg:col-span-10"> {/* Spans full width */}
-                                 <div className="bg-card p-6 rounded-lg shadow max-w-2xl mx-auto">
-                                     <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
-                                 </div>
-                             </div>
-                         )}
-                         </div>
+                        {/* Initial form handling when no content is loaded - adjusted this logic */}
+                        {!tutoringContent && !isGeneratingContent && (
+                            <div className="flex-1 flex items-center justify-center">
+                                <div className="w-full max-w-2xl">
+                                     {renderMainContent()} {/* Renders the form via renderMainContent */}
+                                </div>
+                            </div>
+                        )}
                      </main>
                  </div>
              </SidebarInset>
@@ -512,3 +508,5 @@ export default function Home() {
       </SidebarProvider>
    );
  }
+
+    

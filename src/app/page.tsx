@@ -475,7 +475,7 @@ export default function Home() {
                      {/* Adjusted layout: Main content flows vertically, chat input at the bottom */}
                      <main className="flex-1 flex flex-col overflow-hidden p-4 md:p-6">
                         {/* Scrollable content area */}
-                        <div className="flex-1 overflow-y-auto mb-4 space-y-6">
+                        <div className="flex-1 overflow-y-auto mb-4"> {/* Removed space-y-6 */}
                             {renderMainContent()}
                         </div>
 

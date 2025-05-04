@@ -450,7 +450,8 @@ export default function Home() {
                                 <TutoringContentDisplay
                                     content={subtopicDetails}
                                     selectedSubtopic={selectedSubtopic}
-                                    topic={topic}
+                                    urgency={urgency as 'high' | 'medium' | 'low'} // Pass urgency
+                                    topic={topic} // Pass main topic
                                 />
                             </div>
                          ) : (
@@ -619,3 +620,4 @@ export default function Home() {
       </Sheet>
    );
  }
+

@@ -96,27 +96,11 @@ const generateTutoringContentFlow = ai.defineFlow<
         // Basic validation or refinement could happen here if needed
         // e.g., ensuring subtopics is actually an array
         if (!output || !Array.isArray(output.subtopics)) {
-            console.error("Invalid output format received from LLM:", output);
-            // Attempt to recover or throw a more specific error
-             const fallbackOutput: GenerateTutoringContentOutput = {
-                outline: output?.outline || "Error: Outline missing",
-                subtopics: ["Error: Subtopics missing or invalid"],
-                explanation: output?.explanation || "Error: Explanation missing",
-                example: output?.example || "Error: Example missing",
-                problem: output?.problem || "Error: Problem missing",
-             };
-
-             if (output && typeof output.subtopics === 'string') {
-                // Attempt to parse if it looks like a stringified array
-                 try {
-                    fallbackOutput.subtopics = JSON.parse(output.subtopics);
-                 } catch (parseError) {
-                     console.error("Failed to parse subtopics string:", parseError);
-                     fallbackOutput.subtopics = ["Error: Could not parse subtopics"];
-                 }
-             }
-             return fallbackOutput; // Return the structured fallback
+          console.error("Invalid output format received from LLM:", output);
+          throw new Error("Invalid output: Subtopics are not an array.");
         }
+        
+
         return output!;
       } catch (error: any) {
           console.error(`Error in generateTutoringContentFlow for topic "${input.topic}" (Urgency: ${input.urgency}):`, error);

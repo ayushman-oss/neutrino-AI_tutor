@@ -14,7 +14,7 @@ import { generateQuiz, type GenerateQuizInput, type GenerateQuizOutput } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { BrainCircuit, Download, Menu, BookOpen, ListTree, HelpCircle, FileQuestion, PartyPopper } from 'lucide-react';
+import { GraduationCap, Download, Menu, BookOpen, ListTree, HelpCircle, FileQuestion, PartyPopper } from 'lucide-react'; // Changed BrainCircuit to GraduationCap
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { FormattedText } from '@/components/edugemini/formatted-text';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -95,14 +95,14 @@ export default function Home() {
     if (tutoringContent && tutoringContent.subtopics.length > 0 && viewedSubtopics.size === tutoringContent.subtopics.length) {
       setIsQuizAvailable(true);
        // Only show the prompt once when all are first viewed
-      if (!showQuizPrompt && !isQuizAvailable) {
+      if (!isQuizAvailable) { // Check against previous state to avoid repeated prompts
         setShowQuizPrompt(true);
       }
     } else {
         setIsQuizAvailable(false);
         setShowQuizPrompt(false); // Reset if content changes or subtopics aren't all viewed
     }
-  }, [viewedSubtopics, tutoringContent, showQuizPrompt, isQuizAvailable]); // Removed showQuizPrompt dependency to avoid loop
+  }, [viewedSubtopics, tutoringContent, isQuizAvailable]); // Depend on isQuizAvailable to prevent re-prompting
 
 
   const handleGenerateContent = async (data: UrgencyTopicFormData) => {
@@ -533,21 +533,22 @@ export default function Home() {
             {/* Header: Fixed height, sticky */}
             <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
                 <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
-                    {/* Sidebar Trigger */}
-                    <SheetTrigger asChild>
-                         <Button
-                             variant="ghost"
-                             size="icon"
-                             className="text-primary-foreground hover:bg-primary/80 flex-shrink-0 h-7 w-7 md:h-8 md:w-8"
-                             disabled={!tutoringContent} // Disable if no content loaded
-                             aria-label="Toggle Navigation"
-                         >
-                            <Menu className="h-5 w-5" />
-                         </Button>
-                    </SheetTrigger>
+                    {/* Sidebar Trigger - Only show when content is loaded */}
+                    {tutoringContent && (
+                         <SheetTrigger asChild>
+                             <Button
+                                 variant="ghost"
+                                 size="icon"
+                                 className="text-primary-foreground hover:bg-primary/80 flex-shrink-0 h-7 w-7 md:h-8 md:w-8"
+                                 aria-label="Toggle Navigation"
+                             >
+                                <Menu className="h-5 w-5" />
+                             </Button>
+                         </SheetTrigger>
+                    )}
                     {/* Branding */}
-                    <BrainCircuit size={24} className="flex-shrink-0 md:hidden" />
-                    <BrainCircuit size={28} className="flex-shrink-0 hidden md:block" />
+                    <GraduationCap size={24} className="flex-shrink-0 md:hidden" />
+                    <GraduationCap size={28} className="flex-shrink-0 hidden md:block" />
                     <h1 className="text-lg md:text-2xl font-bold truncate">EduGemini</h1>
                     {topic && <span className="text-sm md:text-base opacity-80 hidden sm:inline">| {topic}</span>}
                 </div>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -8,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { AlertCircle, Zap, Turtle, Rabbit } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from '@/lib/utils';
 
 const urgencyLevels = [
   { value: 'high', label: 'High (Quick Overview)', icon: Zap },
@@ -81,21 +83,30 @@ export function UrgencyTopicForm({ onSubmit, isLoading = false }: UrgencyTopicFo
             <FormItem className="space-y-3">
               <FormLabel>How urgently do you need to learn?</FormLabel>
               <FormControl>
+                {/* Use RadioGroup for accessibility and state management */}
                 <RadioGroup
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4"
+                  value={field.value} // Ensure value is controlled
+                  className="grid grid-cols-1 sm:grid-cols-3 gap-3"
                   disabled={isLoading}
                 >
                   {urgencyLevels.map(({ value, label, icon: Icon }) => (
-                    <FormItem key={value} className="flex items-center space-x-3 space-y-0">
+                    <FormItem key={value} className="relative"> {/* Use relative positioning for peer */}
+                       {/* Actual radio button, visually hidden but focusable */}
                       <FormControl>
-                        <RadioGroupItem value={value} />
+                        <RadioGroupItem value={value} id={value} className="sr-only peer" />
                       </FormControl>
-                      <FormLabel className="font-normal flex items-center gap-2 cursor-pointer">
-                         <Icon className="h-4 w-4 text-muted-foreground" />
-                         {label}
-                      </FormLabel>
+                      {/* Custom label acting as the visible button */}
+                      <FormLabel
+                         htmlFor={value}
+                         className={cn(
+                           "flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-colors",
+                           isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                         )}
+                       >
+                         <Icon className="mb-2 h-6 w-6" />
+                         <span className="text-sm font-medium text-center">{label}</span>
+                       </FormLabel>
                     </FormItem>
                   ))}
                 </RadioGroup>
@@ -104,6 +115,7 @@ export function UrgencyTopicForm({ onSubmit, isLoading = false }: UrgencyTopicFo
             </FormItem>
           )}
         />
+
 
         <Button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
           {isLoading ? 'Generating...' : 'Start Learning'}

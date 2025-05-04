@@ -27,6 +27,7 @@ interface SubtopicSidebarProps {
   currentView: ViewMode;
   viewedSubtopics: Set<string>; // Set of viewed subtopic names
   isQuizAvailable: boolean; // Flag indicating if quiz can be taken
+  className?: string; // Add className prop
 }
 
 export function SubtopicSidebar({
@@ -41,19 +42,22 @@ export function SubtopicSidebar({
   currentView,
   viewedSubtopics,
   isQuizAvailable,
+  className, // Receive className prop
 }: SubtopicSidebarProps) {
 
    const isOutlineSelected = currentView === 'outline';
 
   return (
-    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
-      <div className="p-4 border-b border-sidebar-border">
+    // Apply className to the root div, ensure flex and flex-col
+    <div className={cn("flex flex-col h-full bg-sidebar text-sidebar-foreground", className)}>
+      <div className="p-4 border-b border-sidebar-border flex-shrink-0"> {/* Prevent header from shrinking */}
         <h2 className="text-lg font-semibold flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
             {topic}
         </h2>
       </div>
-      <ScrollArea className="flex-1">
+      {/* Allow ScrollArea to take remaining space */}
+      <ScrollArea className="flex-1 min-h-0"> {/* Add min-h-0 to ensure scrolling works */}
         <nav className="p-2 space-y-1">
            {/* Outline Button */}
            <Button
@@ -146,7 +150,7 @@ export function SubtopicSidebar({
         </nav>
       </ScrollArea>
       {/* Progress indicator (optional) */}
-       <div className="p-2 border-t border-sidebar-border text-xs text-center text-sidebar-foreground/70">
+       <div className="p-2 border-t border-sidebar-border text-xs text-center text-sidebar-foreground/70 flex-shrink-0"> {/* Prevent footer from shrinking */}
           {subtopics.length > 0 ? (
             <span>
                {viewedSubtopics.size} / {subtopics.length} subtopics viewed

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UrgencyTopicForm, type UrgencyTopicFormData } from '@/components/edugemini/urgency-topic-form';
 import { TutoringContentDisplay } from '@/components/edugemini/tutoring-content-display';
 import { ChatInterface } from '@/components/edugemini/chat-interface';
@@ -17,8 +17,9 @@ import { useToast } from '@/hooks/use-toast';
 import { GraduationCap, Download, Menu, BookOpen, ListTree, HelpCircle, FileQuestion, PartyPopper } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { FormattedText } from '@/components/edugemini/formatted-text';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ThemeToggleButton } from '@/components/theme-toggle-button'; // Import theme toggle button
 
 
 interface SubtopicDetailCache {
@@ -124,7 +125,7 @@ export default function Home() {
     setTopic(data.topic);
     setLearningProgress('');
     setViewMode('outline');
-    setIsSidebarOpen(false);
+    setIsSidebarOpen(false); // Keep sidebar closed initially
 
     try {
       const content = await generateTutoringContent({ topic: data.topic, urgency: data.urgency });
@@ -137,9 +138,12 @@ export default function Home() {
             description = "The AI service is currently overloaded. Please try again shortly.";
         } else if (error.message?.includes('Invalid output format') || error.message?.includes('template error')) {
             description = "There was an issue formatting the content. Please try again.";
+        } else if (error.message?.includes('API key')) {
+            description = "Invalid or missing API key. Please check your configuration.";
         } else {
             description = error.message || description;
         }
+
 
         toast({
             title: "Error Generating Content",
@@ -262,6 +266,8 @@ export default function Home() {
           description = "The AI service is overloaded. Please try asking again shortly.";
       } else if (error.message?.includes('template error')) {
           description = "Internal error processing the request. Please try again.";
+      } else if (error.message?.includes('API key')) {
+          description = "Invalid or missing API key. Please check your configuration.";
       } else {
           description = error.message || description;
       }
@@ -299,9 +305,12 @@ export default function Home() {
           let description = "Failed to generate the quiz. Please try again.";
           if (error.message?.includes('overloaded')) {
               description = "The AI service is overloaded while generating the quiz. Please try again shortly.";
+          } else if (error.message?.includes('API key')) {
+              description = "Invalid or missing API key. Please check your configuration.";
           } else {
               description = error.message || description;
           }
+
           toast({
               title: "Error Generating Quiz",
               description: description,
@@ -394,7 +403,7 @@ export default function Home() {
 
       if (!tutoringContent) {
            return (
-               <div className="flex-1 flex items-center justify-center p-4 md:p-6 w-full pb-20"> {/* Added pb-20 */}
+               <div className="flex-1 flex items-center justify-center p-4 md:p-6 w-full">
                    <div className="bg-card p-6 rounded-lg shadow max-w-2xl w-full">
                       <UrgencyTopicForm onSubmit={handleGenerateContent} isLoading={isGeneratingContent} />
                    </div>
@@ -532,7 +541,7 @@ export default function Home() {
   return (
     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
          {/* Main layout: Full height, flex column */}
-         <div className="h-dvh bg-secondary flex flex-col w-screen overflow-hidden"> {/* Added overflow-hidden */}
+         <div className="h-dvh bg-secondary flex flex-col w-screen overflow-hidden">
             {/* Header: Fixed height, sticky */}
             <header className="bg-primary text-primary-foreground p-3 md:p-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-sm flex-shrink-0">
                 <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
@@ -555,14 +564,19 @@ export default function Home() {
                     <h1 className="text-lg md:text-2xl font-bold truncate">Neutrino</h1> {/* Changed Name */}
                     {topic && <span className="text-sm md:text-base opacity-80 hidden sm:inline">| {topic}</span>}
                 </div>
-                {/* Export Button */}
-                {tutoringContent && (
-                <Button variant="secondary" size="sm" onClick={handleExportContent} className="flex-shrink-0">
-                    <Download className="mr-1 md:mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Export Session</span>
-                    <span className="sm:hidden">Export</span>
-                </Button>
-                )}
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Export Button */}
+                    {tutoringContent && (
+                    <Button variant="secondary" size="sm" onClick={handleExportContent} className="h-7 md:h-8 px-2 md:px-3">
+                        <Download className="mr-1 md:mr-2 h-4 w-4" />
+                        <span className="hidden sm:inline">Export Session</span>
+                        <span className="sm:hidden">Export</span>
+                    </Button>
+                    )}
+                    {/* Theme Toggle Button */}
+                    <ThemeToggleButton />
+                </div>
             </header>
 
             {/* Main Content Area: Takes remaining space, scrolls */}
@@ -585,7 +599,7 @@ export default function Home() {
              )}
 
              {/* Sidebar Content (Sheet) */}
-             <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
+             <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col"> {/* Ensure flex-col */}
                  {tutoringContent && (
                     <SubtopicSidebar
                         topic={topic}
@@ -599,6 +613,7 @@ export default function Home() {
                         currentView={viewMode}
                         viewedSubtopics={viewedSubtopics} // Pass viewed set
                         isQuizAvailable={isQuizAvailable} // Pass availability flag
+                        className="flex-1" // Allow sidebar content to grow and scroll
                     />
                  )}
             </SheetContent>

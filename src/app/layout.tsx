@@ -4,7 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"; // Import Toaster
 
 export const metadata: Metadata = {
-  title: 'EduGemini - AI Engineering Tutor',
+  title: 'Neutrino - AI Engineering Tutor', // Changed title
   description: 'Learn engineering topics with an AI tutor powered by Gemini.',
 };
 

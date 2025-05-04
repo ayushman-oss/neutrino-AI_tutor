@@ -54,7 +54,7 @@ export function UrgencyTopicForm({ onSubmit, isLoading = false }: UrgencyTopicFo
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Welcome to EduGemini!</AlertTitle>
+          <AlertTitle>Welcome to Neutrino!</AlertTitle> {/* Changed Name */}
           <AlertDescription>
             Start by telling me what engineering topic you'd like to learn about and how quickly you need to grasp it.
           </AlertDescription>

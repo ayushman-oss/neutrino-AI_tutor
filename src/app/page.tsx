@@ -14,7 +14,7 @@ import { generateQuiz, type GenerateQuizInput, type GenerateQuizOutput } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { GraduationCap, Download, Menu, BookOpen, ListTree, HelpCircle, FileQuestion, PartyPopper } from 'lucide-react'; // Changed BrainCircuit to GraduationCap
+import { GraduationCap, Download, Menu, BookOpen, ListTree, HelpCircle, FileQuestion, PartyPopper } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { FormattedText } from '@/components/edugemini/formatted-text';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -93,16 +93,19 @@ export default function Home() {
   // Effect to check if all subtopics have been viewed
   useEffect(() => {
     if (tutoringContent && tutoringContent.subtopics.length > 0 && viewedSubtopics.size === tutoringContent.subtopics.length) {
-      setIsQuizAvailable(true);
-       // Only show the prompt once when all are first viewed
-      if (!isQuizAvailable) { // Check against previous state to avoid repeated prompts
-        setShowQuizPrompt(true);
+      // Only trigger state change if it's not already available
+      if (!isQuizAvailable) {
+        setIsQuizAvailable(true);
+        setShowQuizPrompt(true); // Show prompt only when it becomes available
       }
     } else {
-        setIsQuizAvailable(false);
-        setShowQuizPrompt(false); // Reset if content changes or subtopics aren't all viewed
+        // Reset if content changes or subtopics aren't all viewed
+        if (isQuizAvailable) {
+           setIsQuizAvailable(false);
+           setShowQuizPrompt(false);
+        }
     }
-  }, [viewedSubtopics, tutoringContent, isQuizAvailable]); // Depend on isQuizAvailable to prevent re-prompting
+  }, [viewedSubtopics, tutoringContent, isQuizAvailable]);
 
 
   const handleGenerateContent = async (data: UrgencyTopicFormData) => {
@@ -549,7 +552,7 @@ export default function Home() {
                     {/* Branding */}
                     <GraduationCap size={24} className="flex-shrink-0 md:hidden" />
                     <GraduationCap size={28} className="flex-shrink-0 hidden md:block" />
-                    <h1 className="text-lg md:text-2xl font-bold truncate">EduGemini</h1>
+                    <h1 className="text-lg md:text-2xl font-bold truncate">Neutrino</h1> {/* Changed Name */}
                     {topic && <span className="text-sm md:text-base opacity-80 hidden sm:inline">| {topic}</span>}
                 </div>
                 {/* Export Button */}
